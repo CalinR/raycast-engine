@@ -1,5 +1,6 @@
 import map1 from './map1'
 import Player from './player'
+import Camera from './camera'
 
 class RaycastEngine {
   constructor(elementId){
@@ -12,13 +13,18 @@ class RaycastEngine {
       width: map1[0].length,
       height: map1.length
     };
-    this.player = new Player({ map: this.map, x: 10, y: 10, rotation: 20 });
-    window.deltaTime = 0;
-    window.lastUpdate = Date.now();
-
+    this.player = new Player({
+      map: this.map,
+      x: 10,
+      y: 10,
+      rotation: 20
+    });
     // Raycast Canvas
     this.raycastCanvas = document.createElement('canvas')
     this.raycastContext = this.raycastCanvas.getContext('2d');
+    this.camera = new Camera({ parent: this.player, canvas: this.canvas, map: this.map, raycastCanvas: this.raycastCanvas });
+    window.deltaTime = 0;
+    window.lastUpdate = Date.now();
     document.body.appendChild(this.raycastCanvas);
 
     this.gameLoop();
@@ -27,12 +33,14 @@ class RaycastEngine {
   update(){
     this.player.update();
     this.drawRaycastCanvas();
+    this.camera.update();
   }
 
   drawRaycastCanvas(){
-    const scale = 10;
+    const scale = 20;
     this.raycastCanvas.width = this.map.width * scale;
     this.raycastCanvas.height = this.map.height * scale;
+    this.raycastContext.clearRect(0,0, this.map.width * scale, this.map.height * scale);
 
     for(let y in this.map.data){
       for(let x in this.map.data[y]){

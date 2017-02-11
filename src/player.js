@@ -8,7 +8,6 @@ export default class Player {
     this.moveSpeed = 5;
     this.rotationSpeed = 180; // Half rotation per second
     this.rotation = rotation;
-
     this.bindKeys();
   }
 
@@ -17,11 +16,20 @@ export default class Player {
     let moveStep = (this.speed * this.moveSpeed);
     let radians = this.rotation * Math.PI / 180;
 
-    let newX = Math.cos(radians) * moveStep;
-    let newY = Math.sin(radians) * moveStep;
+    let moveX = Math.cos(radians) * moveStep;
+    let moveY = Math.sin(radians) * moveStep;
 
-    this.x += newX * window.deltaTime;
-    this.y += newY * window.deltaTime;
+    let newX = this.x + (moveX * window.deltaTime);
+    let newY = this.y + (moveY * window.deltaTime);
+
+    if (!this.hitTest(newX, newY)){
+      this.x = newX;
+      this.y = newY;
+    }
+  }
+
+  hitTest(x, y){
+      return this.map.data[Math.floor(y)][Math.floor(x)] > 0;
   }
 
   bindKeys(){
@@ -62,7 +70,6 @@ export default class Player {
           break;
       }
     }
-
   }
 
 }

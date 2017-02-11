@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -71,78 +71,26 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__map1__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__player__ = __webpack_require__(2);
-
-
-
-class RaycastEngine {
-  constructor(elementId) {
-    this.canvas = document.getElementById(elementId);
-    this.context = this.canvas.getContext('2d');
-    this.width = this.canvas.width;
-    this.height = this.canvas.height;
-    this.map = {
-      data: __WEBPACK_IMPORTED_MODULE_0__map1__["a" /* default */],
-      width: __WEBPACK_IMPORTED_MODULE_0__map1__["a" /* default */][0].length,
-      height: __WEBPACK_IMPORTED_MODULE_0__map1__["a" /* default */].length
-    };
-    this.player = new __WEBPACK_IMPORTED_MODULE_1__player__["a" /* default */]({ map: this.map, x: 10, y: 10, rotation: 20 });
-    window.deltaTime = 0;
-    window.lastUpdate = Date.now();
-
-    // Raycast Canvas
-    this.raycastCanvas = document.createElement('canvas');
+class Camera {
+  constructor({ parent, canvas, map, raycastCanvas } = {}) {
+    this.parent = parent;
+    this.canvas = canvas;
+    this.context = canvas.getContext('2d');
+    this.x = 0;
+    this.y = 0;
+    this.rotation = 0;
+    this.raycastCanvas = raycastCanvas;
     this.raycastContext = this.raycastCanvas.getContext('2d');
-    document.body.appendChild(this.raycastCanvas);
-
-    this.gameLoop();
   }
 
   update() {
-    this.player.update();
-    this.drawRaycastCanvas();
-  }
-
-  drawRaycastCanvas() {
-    const scale = 10;
-    this.raycastCanvas.width = this.map.width * scale;
-    this.raycastCanvas.height = this.map.height * scale;
-
-    for (let y in this.map.data) {
-      for (let x in this.map.data[y]) {
-        if (this.map.data[y][x] > 0) {
-          this.raycastContext.fillStyle = '#ccc';
-          this.raycastContext.fillRect(x * scale, y * scale, scale, scale);
-        } else {
-          this.raycastContext.strokeStyle = '#ccc';
-          this.raycastContext.strokeRect(x * scale, y * scale, scale, scale);
-        }
-      }
-    }
-
-    let radians = this.player.rotation * Math.PI / 180;
-
-    this.raycastContext.save();
-    this.raycastContext.translate(this.player.x * scale, this.player.y * scale);
-    this.raycastContext.rotate(radians);
-    this.raycastContext.fillStyle = '#000';
-    this.raycastContext.fillRect(-scale / 4, -scale / 4, scale / 2, scale / 2);
-    this.raycastContext.restore();
-  }
-
-  gameLoop() {
-    let currentFrameTime = Date.now();
-    window.deltaTime = (currentFrameTime - window.lastUpdate) / 1000.0; // Convert delta time from milliseconds to seconds
-    window.lastUpdate = currentFrameTime;
-    this.update();
-
-    window.requestAnimationFrame(() => this.gameLoop());
+    this.x = this.parent.x;
+    this.y = this.parent.y;
+    this.rotation = this.parent.rotation;
   }
 }
+/* harmony export (immutable) */ __webpack_exports__["a"] = Camera;
 
-window.RaycastEngine = RaycastEngine;
 
 /***/ }),
 /* 1 */
@@ -168,7 +116,6 @@ class Player {
     this.moveSpeed = 5;
     this.rotationSpeed = 180; // Half rotation per second
     this.rotation = rotation;
-
     this.bindKeys();
   }
 
@@ -177,11 +124,20 @@ class Player {
     let moveStep = this.speed * this.moveSpeed;
     let radians = this.rotation * Math.PI / 180;
 
-    let newX = Math.cos(radians) * moveStep;
-    let newY = Math.sin(radians) * moveStep;
+    let moveX = Math.cos(radians) * moveStep;
+    let moveY = Math.sin(radians) * moveStep;
 
-    this.x += newX * window.deltaTime;
-    this.y += newY * window.deltaTime;
+    let newX = this.x + moveX * window.deltaTime;
+    let newY = this.y + moveY * window.deltaTime;
+
+    if (!this.hitTest(newX, newY)) {
+      this.x = newX;
+      this.y = newY;
+    }
+  }
+
+  hitTest(x, y) {
+    return this.map.data[Math.floor(y)][Math.floor(x)] > 0;
   }
 
   bindKeys() {
@@ -227,6 +183,93 @@ class Player {
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = Player;
 
+
+/***/ }),
+/* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__map1__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__player__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__camera__ = __webpack_require__(0);
+
+
+
+
+class RaycastEngine {
+  constructor(elementId) {
+    this.canvas = document.getElementById(elementId);
+    this.context = this.canvas.getContext('2d');
+    this.width = this.canvas.width;
+    this.height = this.canvas.height;
+    this.map = {
+      data: __WEBPACK_IMPORTED_MODULE_0__map1__["a" /* default */],
+      width: __WEBPACK_IMPORTED_MODULE_0__map1__["a" /* default */][0].length,
+      height: __WEBPACK_IMPORTED_MODULE_0__map1__["a" /* default */].length
+    };
+    this.player = new __WEBPACK_IMPORTED_MODULE_1__player__["a" /* default */]({
+      map: this.map,
+      x: 10,
+      y: 10,
+      rotation: 20
+    });
+    // Raycast Canvas
+    this.raycastCanvas = document.createElement('canvas');
+    this.raycastContext = this.raycastCanvas.getContext('2d');
+    this.camera = new __WEBPACK_IMPORTED_MODULE_2__camera__["a" /* default */]({ parent: this.player, canvas: this.canvas, map: this.map, raycastCanvas: this.raycastCanvas });
+    window.deltaTime = 0;
+    window.lastUpdate = Date.now();
+    document.body.appendChild(this.raycastCanvas);
+
+    this.gameLoop();
+  }
+
+  update() {
+    this.player.update();
+    this.drawRaycastCanvas();
+    this.camera.update();
+  }
+
+  drawRaycastCanvas() {
+    const scale = 20;
+    this.raycastCanvas.width = this.map.width * scale;
+    this.raycastCanvas.height = this.map.height * scale;
+    this.raycastContext.clearRect(0, 0, this.map.width * scale, this.map.height * scale);
+
+    for (let y in this.map.data) {
+      for (let x in this.map.data[y]) {
+        if (this.map.data[y][x] > 0) {
+          this.raycastContext.fillStyle = '#ccc';
+          this.raycastContext.fillRect(x * scale, y * scale, scale, scale);
+        } else {
+          this.raycastContext.strokeStyle = '#ccc';
+          this.raycastContext.strokeRect(x * scale, y * scale, scale, scale);
+        }
+      }
+    }
+
+    let radians = this.player.rotation * Math.PI / 180;
+
+    this.raycastContext.save();
+    this.raycastContext.translate(this.player.x * scale, this.player.y * scale);
+    this.raycastContext.rotate(radians);
+    this.raycastContext.fillStyle = '#000';
+    this.raycastContext.fillRect(-scale / 4, -scale / 4, scale / 2, scale / 2);
+    this.raycastContext.restore();
+  }
+
+  gameLoop() {
+    let currentFrameTime = Date.now();
+    window.deltaTime = (currentFrameTime - window.lastUpdate) / 1000.0; // Convert delta time from milliseconds to seconds
+    window.lastUpdate = currentFrameTime;
+    this.update();
+
+    window.requestAnimationFrame(() => this.gameLoop());
+  }
+}
+
+window.RaycastEngine = RaycastEngine;
 
 /***/ })
 /******/ ]);
