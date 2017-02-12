@@ -1,4 +1,5 @@
 import map1 from './map1'
+import map2 from './map2'
 import Player from './player'
 import Camera from './camera'
 
@@ -17,7 +18,7 @@ class RaycastEngine {
       map: this.map,
       x: 10,
       y: 10,
-      rotation: 20
+      rotation: 0
     });
     // Raycast Canvas
     this.raycastCanvas = document.createElement('canvas')
@@ -37,7 +38,7 @@ class RaycastEngine {
   }
 
   drawRaycastCanvas(){
-    const scale = 20;
+    const scale = 8;
     this.raycastCanvas.width = this.map.width * scale;
     this.raycastCanvas.height = this.map.height * scale;
     this.raycastContext.clearRect(0,0, this.map.width * scale, this.map.height * scale);

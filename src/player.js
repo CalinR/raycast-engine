@@ -13,6 +13,12 @@ export default class Player {
 
   update(){
     this.rotation += (this.direction * this.rotationSpeed) * window.deltaTime;
+    if(this.rotation > 360){
+      this.rotation = 0;
+    }
+    else if(this.rotation < 0){
+      this.rotation = 360;
+    }
     let moveStep = (this.speed * this.moveSpeed);
     let radians = this.rotation * Math.PI / 180;
 
