@@ -5,7 +5,7 @@ import Camera from './camera'
 import Textures from './textures'
 
 class RaycastEngine {
-  constructor(elementId){
+  constructor(elementId, devMode){
     this.canvas = document.getElementById(elementId);
     this.context = this.canvas.getContext('2d');
     this.width = this.canvas.width;
@@ -22,20 +22,27 @@ class RaycastEngine {
       y: 10,
       rotation: 0
     });
-    // Raycast Canvas
-    this.raycastCanvas = document.createElement('canvas')
-    this.raycastContext = this.raycastCanvas.getContext('2d');
+    this.devMode = devMode;
+    this.raycastCanvas = null;
+
+    if(this.devMode){
+      this.raycastCanvas = document.createElement('canvas')
+      this.raycastContext = this.raycastCanvas.getContext('2d');
+      document.body.appendChild(this.raycastCanvas);
+    }
+
     this.camera = new Camera({ parent: this.player, canvas: this.canvas, map: this.map, raycastCanvas: this.raycastCanvas, textures: this.textures });
     window.deltaTime = 0;
     window.lastUpdate = Date.now();
-    document.body.appendChild(this.raycastCanvas);
 
     this.textures.preloadTextures(map1).then(() => this.gameLoop());
   }
 
   update(){
     this.player.update();
-    this.drawRaycastCanvas();
+    if(this.devMode){
+      this.drawRaycastCanvas();
+    }
     this.camera.update();
   }
 

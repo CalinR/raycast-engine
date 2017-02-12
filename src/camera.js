@@ -1,5 +1,5 @@
 export default class Camera {
-  constructor({ parent, canvas, map, raycastCanvas, textures } = {}){
+  constructor({ parent, canvas, map, raycastCanvas, textures, ceilingColor = '#383838', floorColor = '#707070' } = {}){
     this.parent = parent;
     this.canvas = canvas;
     this.context = canvas.getContext('2d');
@@ -8,11 +8,14 @@ export default class Camera {
     this.y = 0;
     this.rotation = 0;
     this.textures = textures;
-    this.raycastCanvas = raycastCanvas;
-    this.raycastContext = this.raycastCanvas.getContext('2d');
     this.columnWidth = 2;
     this.focalLength = this.canvas.height / this.columnWidth;
-    // this.createRays();
+    this.ceilingColor = ceilingColor;
+    this.floorColor = floorColor;
+    if(raycastCanvas){
+      this.raycastCanvas = raycastCanvas;
+      this.raycastContext = this.raycastCanvas.getContext('2d');
+    }
   }
 
   update(){
@@ -24,8 +27,7 @@ export default class Camera {
 
   createRays(){
     let columns = Math.ceil(this.canvas.width / this.columnWidth);
-    // columns = 1;
-    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.drawBackground();
     let columnsToDraw = [];
     let maxWallHeight = this.canvas.height;
     for(let column = 0; column < columns; column++){
@@ -35,44 +37,18 @@ export default class Camera {
       let hitData = this.castRay(radians + angle);
       let z = hitData.distance;
       let texture = hitData.texture;
-
-
-      // console.log(texture);
       let height = this.canvas.height / z;
       let columnX = column * this.columnWidth;
-      // this.context.fillStyle = '#000';
-      // this.context.fillRect(columnX, (this.canvas.height / 2) - (height / 2), this.columnWidth, height);
-      let imageSlice = this.textures.getTexture(texture.type, texture.offset, this.columnWidth, 1);
-      this.context.drawImage(imageSlice, columnX, (this.canvas.height / 2) - (height / 2), this.columnWidth, height);
+      let columnY = (this.canvas.height / 2) - (height / 2);
+      this.textures.getTexture(texture.type, texture.offset, this.columnWidth, 1, this.context, columnX, columnY, height);
     }
+  }
 
-
-
-    // let draw = (column) => {
-    //   let x = (-columns / 2 + column);
-    //   let angle = Math.atan2(x, this.focalLength);
-    //   let radians = this.parent.rotation * Math.PI / 180;
-    //   let hitData = this.castRay(radians + angle);
-    //   let z = hitData.distance;
-    //   let texture = hitData.texture;
-    //
-    //
-    //   // console.log(texture);
-    //   let height = this.canvas.height / z;
-    //   let columnX = column * this.columnWidth;
-    //   // this.context.fillStyle = '#000';
-    //   // this.context.fillRect(columnX, (this.canvas.height / 2) - (height / 2), this.columnWidth, height);
-    //   setTimeout(() => {
-    //     let imageSlice = this.textures.getTexture(texture.type, texture.offset, this.columnWidth, 1);
-    //     this.context.drawImage(imageSlice, columnX, (this.canvas.height / 2) - (height / 2), this.columnWidth, height);
-    //     if(column < columns){
-    //       column += 1;
-    //       draw(column);
-    //     }
-    //   }, 100)
-    // }
-    //
-    // draw(0);
+  drawBackground(){
+    this.context.fillStyle = this.ceilingColor;
+    this.context.fillRect(0, 0, this.canvas.width, this.canvas.height / 2);
+    this.context.fillStyle = this.floorColor;
+    this.context.fillRect(0, this.canvas.height / 2, this.canvas.width, this.canvas.height / 2);
   }
 
   castRay(angle){
@@ -152,18 +128,22 @@ export default class Camera {
       y += yOffset;
     }
 
-    this.raycastContext.fillStyle = 'red';
-    this.raycastContext.fillRect(xHit * 8, yHit * 8, 4, 4);
+    if(this.raycastCanvas){
+      this.raycastContext.fillStyle = 'red';
+      this.raycastContext.fillRect(xHit * 8, yHit * 8, 4, 4);
+    }
 
     if(xHit && yHit){
-      this.raycastContext.save();
-      this.raycastContext.globalAlpha = 0.2;
-      this.raycastContext.beginPath();
-      this.raycastContext.moveTo(this.parent.x * 8,this.parent.y * 8);
-      this.raycastContext.lineTo(xHit * 8, yHit * 8);
-      this.raycastContext.strokeStyle = 'red';
-      this.raycastContext.stroke();
-      this.raycastContext.restore();
+      if(this.raycastCanvas){
+        this.raycastContext.save();
+        this.raycastContext.globalAlpha = 0.2;
+        this.raycastContext.beginPath();
+        this.raycastContext.moveTo(this.parent.x * 8,this.parent.y * 8);
+        this.raycastContext.lineTo(xHit * 8, yHit * 8);
+        this.raycastContext.strokeStyle = 'red';
+        this.raycastContext.stroke();
+        this.raycastContext.restore();
+      }
       distance = Math.sqrt(distance);
   		distance = distance * Math.cos((this.parent.rotation * Math.PI / 180) - angle);
 

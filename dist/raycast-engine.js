@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 3);
+/******/ 	return __webpack_require__(__webpack_require__.s = 5);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -88,7 +88,11 @@ var Camera = function () {
         canvas = _ref.canvas,
         map = _ref.map,
         raycastCanvas = _ref.raycastCanvas,
-        textures = _ref.textures;
+        textures = _ref.textures,
+        _ref$ceilingColor = _ref.ceilingColor,
+        ceilingColor = _ref$ceilingColor === undefined ? '#383838' : _ref$ceilingColor,
+        _ref$floorColor = _ref.floorColor,
+        floorColor = _ref$floorColor === undefined ? '#707070' : _ref$floorColor;
 
     _classCallCheck(this, Camera);
 
@@ -100,11 +104,14 @@ var Camera = function () {
     this.y = 0;
     this.rotation = 0;
     this.textures = textures;
-    this.raycastCanvas = raycastCanvas;
-    this.raycastContext = this.raycastCanvas.getContext('2d');
     this.columnWidth = 2;
     this.focalLength = this.canvas.height / this.columnWidth;
-    // this.createRays();
+    this.ceilingColor = ceilingColor;
+    this.floorColor = floorColor;
+    if (raycastCanvas) {
+      this.raycastCanvas = raycastCanvas;
+      this.raycastContext = this.raycastCanvas.getContext('2d');
+    }
   }
 
   _createClass(Camera, [{
@@ -119,8 +126,7 @@ var Camera = function () {
     key: 'createRays',
     value: function createRays() {
       var columns = Math.ceil(this.canvas.width / this.columnWidth);
-      // columns = 1;
-      this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.drawBackground();
       var columnsToDraw = [];
       var maxWallHeight = this.canvas.height;
       for (var column = 0; column < columns; column++) {
@@ -130,41 +136,19 @@ var Camera = function () {
         var hitData = this.castRay(radians + angle);
         var z = hitData.distance;
         var texture = hitData.texture;
-
-        // console.log(texture);
         var height = this.canvas.height / z;
         var columnX = column * this.columnWidth;
-        // this.context.fillStyle = '#000';
-        // this.context.fillRect(columnX, (this.canvas.height / 2) - (height / 2), this.columnWidth, height);
-        var imageSlice = this.textures.getTexture(texture.type, texture.offset, this.columnWidth, 1);
-        this.context.drawImage(imageSlice, columnX, this.canvas.height / 2 - height / 2, this.columnWidth, height);
+        var columnY = this.canvas.height / 2 - height / 2;
+        this.textures.getTexture(texture.type, texture.offset, this.columnWidth, 1, this.context, columnX, columnY, height);
       }
-
-      // let draw = (column) => {
-      //   let x = (-columns / 2 + column);
-      //   let angle = Math.atan2(x, this.focalLength);
-      //   let radians = this.parent.rotation * Math.PI / 180;
-      //   let hitData = this.castRay(radians + angle);
-      //   let z = hitData.distance;
-      //   let texture = hitData.texture;
-      //
-      //
-      //   // console.log(texture);
-      //   let height = this.canvas.height / z;
-      //   let columnX = column * this.columnWidth;
-      //   // this.context.fillStyle = '#000';
-      //   // this.context.fillRect(columnX, (this.canvas.height / 2) - (height / 2), this.columnWidth, height);
-      //   setTimeout(() => {
-      //     let imageSlice = this.textures.getTexture(texture.type, texture.offset, this.columnWidth, 1);
-      //     this.context.drawImage(imageSlice, columnX, (this.canvas.height / 2) - (height / 2), this.columnWidth, height);
-      //     if(column < columns){
-      //       column += 1;
-      //       draw(column);
-      //     }
-      //   }, 100)
-      // }
-      //
-      // draw(0);
+    }
+  }, {
+    key: 'drawBackground',
+    value: function drawBackground() {
+      this.context.fillStyle = this.ceilingColor;
+      this.context.fillRect(0, 0, this.canvas.width, this.canvas.height / 2);
+      this.context.fillStyle = this.floorColor;
+      this.context.fillRect(0, this.canvas.height / 2, this.canvas.width, this.canvas.height / 2);
     }
   }, {
     key: 'castRay',
@@ -245,18 +229,22 @@ var Camera = function () {
         y += yOffset;
       }
 
-      this.raycastContext.fillStyle = 'red';
-      this.raycastContext.fillRect(xHit * 8, yHit * 8, 4, 4);
+      if (this.raycastCanvas) {
+        this.raycastContext.fillStyle = 'red';
+        this.raycastContext.fillRect(xHit * 8, yHit * 8, 4, 4);
+      }
 
       if (xHit && yHit) {
-        this.raycastContext.save();
-        this.raycastContext.globalAlpha = 0.2;
-        this.raycastContext.beginPath();
-        this.raycastContext.moveTo(this.parent.x * 8, this.parent.y * 8);
-        this.raycastContext.lineTo(xHit * 8, yHit * 8);
-        this.raycastContext.strokeStyle = 'red';
-        this.raycastContext.stroke();
-        this.raycastContext.restore();
+        if (this.raycastCanvas) {
+          this.raycastContext.save();
+          this.raycastContext.globalAlpha = 0.2;
+          this.raycastContext.beginPath();
+          this.raycastContext.moveTo(this.parent.x * 8, this.parent.y * 8);
+          this.raycastContext.lineTo(xHit * 8, yHit * 8);
+          this.raycastContext.strokeStyle = 'red';
+          this.raycastContext.stroke();
+          this.raycastContext.restore();
+        }
         distance = Math.sqrt(distance);
         distance = distance * Math.cos(this.parent.rotation * Math.PI / 180 - angle);
 
@@ -294,6 +282,20 @@ exports.default = map1;
 
 /***/ }),
 /* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var map1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]];
+
+exports.default = map1;
+
+/***/ }),
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -411,7 +413,106 @@ var Player = function () {
 exports.default = Player;
 
 /***/ }),
-/* 3 */
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var textures = ['w_1.png', 'w_2.png', 'w_3.png', 'w_4.png', 'w_5.png'];
+
+var Textures = function () {
+  function Textures() {
+    _classCallCheck(this, Textures);
+
+    this.tiles = [];
+    this.textures = [];
+    this.canvases = [];
+  }
+
+  _createClass(Textures, [{
+    key: 'getUniqueTiles',
+    value: function getUniqueTiles(map) {
+      var tiles = [];
+      for (var y = 0; y < map.length; y++) {
+        for (var x = 0; x < map[y].length; x++) {
+          var tile = map[y][x];
+          if (tiles.indexOf(tile) == -1 && tile > 0) {
+            tiles[tile] = tile;
+          }
+        }
+      }
+
+      return tiles.map(function (index) {
+        return textures[index - 1];
+      });
+    }
+  }, {
+    key: 'preloadTextures',
+    value: function preloadTextures(map) {
+      var _this = this;
+
+      return new Promise(function (resolve, reject) {
+        _this.tiles = _this.getUniqueTiles(map);
+
+        var _loop = function _loop(t) {
+          var tile = _this.tiles[t];
+          if (tile) {
+            (function () {
+              var image = new Image();
+              image.src = './assets/' + tile;
+              image.onload = function () {
+                _this.textures[t] = image;
+                var canvas = document.createElement('canvas');
+                var context = canvas.getContext('2d');
+                canvas.width = image.width * 3;
+                canvas.height = image.height;
+                context.drawImage(image, 0, 0, image.width, image.height);
+                context.drawImage(image, image.width, 0, image.width, image.height);
+                context.drawImage(image, image.width * 2, 0, image.width, image.height);
+                _this.canvases[t] = {
+                  canvas: canvas,
+                  context: context
+                };
+                if (_this.textures.length >= _this.tiles.length) {
+                  resolve(_this.textures);
+                }
+              };
+            })();
+          }
+        };
+
+        for (var t = 0; t < _this.tiles.length; t++) {
+          _loop(t);
+        }
+      });
+    }
+  }, {
+    key: 'getTexture',
+    value: function getTexture(tile, offset, tileWidth, side, context, columnX, columnY, tileHeight) {
+      var width = this.textures[tile].width;
+      var height = this.textures[tile].width;
+      var texture = this.textures[tile];
+      var x = Math.round(width * offset - tileWidth / 2) + width;
+      context.drawImage(this.canvases[tile].canvas, x, 0, tileWidth, height, columnX, columnY, tileWidth, tileHeight);
+    }
+  }]);
+
+  return Textures;
+}();
+
+exports.default = Textures;
+
+/***/ }),
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -423,11 +524,11 @@ var _map = __webpack_require__(1);
 
 var _map2 = _interopRequireDefault(_map);
 
-var _map3 = __webpack_require__(4);
+var _map3 = __webpack_require__(2);
 
 var _map4 = _interopRequireDefault(_map3);
 
-var _player = __webpack_require__(2);
+var _player = __webpack_require__(3);
 
 var _player2 = _interopRequireDefault(_player);
 
@@ -435,7 +536,7 @@ var _camera = __webpack_require__(0);
 
 var _camera2 = _interopRequireDefault(_camera);
 
-var _textures = __webpack_require__(6);
+var _textures = __webpack_require__(4);
 
 var _textures2 = _interopRequireDefault(_textures);
 
@@ -444,7 +545,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var RaycastEngine = function () {
-  function RaycastEngine(elementId) {
+  function RaycastEngine(elementId, devMode) {
     var _this = this;
 
     _classCallCheck(this, RaycastEngine);
@@ -465,13 +566,18 @@ var RaycastEngine = function () {
       y: 10,
       rotation: 0
     });
-    // Raycast Canvas
-    this.raycastCanvas = document.createElement('canvas');
-    this.raycastContext = this.raycastCanvas.getContext('2d');
+    this.devMode = devMode;
+    this.raycastCanvas = null;
+
+    if (this.devMode) {
+      this.raycastCanvas = document.createElement('canvas');
+      this.raycastContext = this.raycastCanvas.getContext('2d');
+      document.body.appendChild(this.raycastCanvas);
+    }
+
     this.camera = new _camera2.default({ parent: this.player, canvas: this.canvas, map: this.map, raycastCanvas: this.raycastCanvas, textures: this.textures });
     window.deltaTime = 0;
     window.lastUpdate = Date.now();
-    document.body.appendChild(this.raycastCanvas);
 
     this.textures.preloadTextures(_map2.default).then(function () {
       return _this.gameLoop();
@@ -482,7 +588,9 @@ var RaycastEngine = function () {
     key: 'update',
     value: function update() {
       this.player.update();
-      this.drawRaycastCanvas();
+      if (this.devMode) {
+        this.drawRaycastCanvas();
+      }
       this.camera.update();
     }
   }, {
@@ -534,128 +642,6 @@ var RaycastEngine = function () {
 }();
 
 window.RaycastEngine = RaycastEngine;
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var map1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]];
-
-exports.default = map1;
-
-/***/ }),
-/* 5 */,
-/* 6 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var textures = ['w_1.png', 'w_2.png', 'w_3.png', 'w_4.png', 'w_5.png'];
-
-var Textures = function () {
-  function Textures() {
-    _classCallCheck(this, Textures);
-
-    this.tiles = [];
-    this.textures = [];
-    this.canvas = document.createElement('canvas');
-    this.context = this.canvas.getContext('2d');
-    // this.canvas.style.width = '50px';
-    // document.body.appendChild(this.canvas);
-  }
-
-  _createClass(Textures, [{
-    key: 'getUniqueTiles',
-    value: function getUniqueTiles(map) {
-      var tiles = [];
-      for (var y = 0; y < map.length; y++) {
-        for (var x = 0; x < map[y].length; x++) {
-          var tile = map[y][x];
-          if (tiles.indexOf(tile) == -1 && tile > 0) {
-            tiles[tile] = tile;
-          }
-        }
-      }
-
-      return tiles.map(function (index) {
-        return textures[index - 1];
-      });
-    }
-  }, {
-    key: 'preloadTextures',
-    value: function preloadTextures(map) {
-      var _this = this;
-
-      return new Promise(function (resolve, reject) {
-        _this.tiles = _this.getUniqueTiles(map);
-
-        var _loop = function _loop(t) {
-          var tile = _this.tiles[t];
-          if (tile) {
-            (function () {
-              var image = new Image();
-              image.src = './assets/' + tile;
-              image.onload = function () {
-                _this.textures[t] = image;
-                if (_this.textures.length >= _this.tiles.length) {
-                  resolve(_this.textures);
-                }
-              };
-            })();
-          }
-        };
-
-        for (var t = 0; t < _this.tiles.length; t++) {
-          _loop(t);
-        }
-      });
-    }
-  }, {
-    key: 'getTexture',
-    value: function getTexture(tile, offset, tileWidth, side) {
-      // console.log(tile);
-      var width = this.textures[tile].width;
-      var height = this.textures[tile].width;
-      var texture = this.textures[tile];
-      var x = Math.round(width * offset - tileWidth / 2);
-
-      // console.log(x);
-
-      // console.log(x);
-
-      this.canvas.width = tileWidth;
-      this.canvas.height = height;
-      this.context.clearRect(0, 0, tileWidth, height);
-      this.context.drawImage(texture, 0, 0, width, height * 2);
-      this.context.drawImage(texture, -x, 0, width, height * 2);
-      this.context.drawImage(texture, width - x, 0, width, height * 2);
-      // debugger;
-
-      return this.canvas;
-      // console.log(width, height);
-      // console.log(`offset: ${offset}`, `side: ${side}`);
-    }
-  }]);
-
-  return Textures;
-}();
-
-exports.default = Textures;
 
 /***/ })
 /******/ ]);

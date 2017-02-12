@@ -4,10 +4,7 @@ export default class Textures {
   constructor(){
     this.tiles = [];
     this.textures = [];
-    this.canvas = document.createElement('canvas');
-    this.context = this.canvas.getContext('2d');
-    // this.canvas.style.width = '50px';
-    // document.body.appendChild(this.canvas);
+    this.canvases = []
   }
 
   getUniqueTiles(map){
@@ -36,6 +33,17 @@ export default class Textures {
           image.src = `./assets/${tile}`;
           image.onload = () => {
             this.textures[t] = image;
+            let canvas = document.createElement('canvas');
+            let context = canvas.getContext('2d');
+            canvas.width = image.width * 3;
+            canvas.height = image.height;
+            context.drawImage(image, 0, 0, image.width, image.height);
+            context.drawImage(image, image.width, 0, image.width, image.height);
+            context.drawImage(image, image.width * 2, 0, image.width, image.height);
+            this.canvases[t] = {
+              canvas: canvas,
+              context: context
+            }
             if(this.textures.length >= this.tiles.length){
               resolve(this.textures);
             }
@@ -45,27 +53,11 @@ export default class Textures {
     })
   }
 
-  getTexture(tile, offset, tileWidth, side){
-    // console.log(tile);
+  getTexture(tile, offset, tileWidth, side, context, columnX, columnY, tileHeight){
     let width = this.textures[tile].width;
     let height = this.textures[tile].width;
     let texture = this.textures[tile];
-    let x = Math.round((width * offset) - (tileWidth / 2));
-
-    // console.log(x);
-
-    // console.log(x);
-
-    this.canvas.width = tileWidth;
-    this.canvas.height = height;
-    this.context.clearRect(0, 0, tileWidth, height);
-    this.context.drawImage(texture, 0, 0, width, height*2);
-    this.context.drawImage(texture, -x, 0, width, height*2);
-    this.context.drawImage(texture, width - x, 0, width, height * 2);
-    // debugger;
-
-    return this.canvas;
-    // console.log(width, height);
-    // console.log(`offset: ${offset}`, `side: ${side}`);
+    let x = Math.round((width * offset) - (tileWidth / 2)) + width;
+    context.drawImage(this.canvases[tile].canvas, x, 0, tileWidth, height, columnX, columnY, tileWidth, tileHeight);
   }
 }
