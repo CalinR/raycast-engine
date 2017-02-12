@@ -68,11 +68,29 @@
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-class Camera {
-  constructor({ parent, canvas, map, raycastCanvas } = {}) {
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Camera = function () {
+  function Camera() {
+    var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        parent = _ref.parent,
+        canvas = _ref.canvas,
+        map = _ref.map,
+        raycastCanvas = _ref.raycastCanvas;
+
+    _classCallCheck(this, Camera);
+
     this.parent = parent;
     this.canvas = canvas;
     this.context = canvas.getContext('2d');
@@ -83,31 +101,63 @@ class Camera {
     this.raycastContext = this.raycastCanvas.getContext('2d');
   }
 
-  update() {
-    this.x = this.parent.x;
-    this.y = this.parent.y;
-    this.rotation = this.parent.rotation;
-  }
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = Camera;
+  _createClass(Camera, [{
+    key: 'update',
+    value: function update() {
+      this.x = this.parent.x;
+      this.y = this.parent.y;
+      this.rotation = this.parent.rotation;
+    }
+  }]);
 
+  return Camera;
+}();
+
+exports.default = Camera;
 
 /***/ }),
 /* 1 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-const map1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 3, 0, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 4, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 3, 3, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]];
 
-/* harmony default export */ __webpack_exports__["a"] = map1;
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var map1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 3, 0, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 4, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 3, 3, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]];
+
+exports.default = map1;
 
 /***/ }),
 /* 2 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-class Player {
-  constructor({ map = [[0]], x = 0, y = 0, rotation = 0 } = {}) {
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Player = function () {
+  function Player() {
+    var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        _ref$map = _ref.map,
+        map = _ref$map === undefined ? [[0]] : _ref$map,
+        _ref$x = _ref.x,
+        x = _ref$x === undefined ? 0 : _ref$x,
+        _ref$y = _ref.y,
+        y = _ref$y === undefined ? 0 : _ref$y,
+        _ref$rotation = _ref.rotation,
+        rotation = _ref$rotation === undefined ? 0 : _ref$rotation;
+
+    _classCallCheck(this, Player);
+
     this.map = map;
     this.x = x;
     this.y = y;
@@ -119,96 +169,118 @@ class Player {
     this.bindKeys();
   }
 
-  update() {
-    this.rotation += this.direction * this.rotationSpeed * window.deltaTime;
-    let moveStep = this.speed * this.moveSpeed;
-    let radians = this.rotation * Math.PI / 180;
+  _createClass(Player, [{
+    key: "update",
+    value: function update() {
+      this.rotation += this.direction * this.rotationSpeed * window.deltaTime;
+      var moveStep = this.speed * this.moveSpeed;
+      var radians = this.rotation * Math.PI / 180;
 
-    let moveX = Math.cos(radians) * moveStep;
-    let moveY = Math.sin(radians) * moveStep;
+      var moveX = Math.cos(radians) * moveStep;
+      var moveY = Math.sin(radians) * moveStep;
 
-    let newX = this.x + moveX * window.deltaTime;
-    let newY = this.y + moveY * window.deltaTime;
+      var newX = this.x + moveX * window.deltaTime;
+      var newY = this.y + moveY * window.deltaTime;
 
-    if (!this.hitTest(newX, newY)) {
-      this.x = newX;
-      this.y = newY;
+      if (!this.hitTest(newX, newY)) {
+        this.x = newX;
+        this.y = newY;
+      }
     }
-  }
+  }, {
+    key: "hitTest",
+    value: function hitTest(x, y) {
+      return this.map.data[Math.floor(y)][Math.floor(x)] > 0;
+    }
+  }, {
+    key: "bindKeys",
+    value: function bindKeys() {
+      var _this = this;
 
-  hitTest(x, y) {
-    return this.map.data[Math.floor(y)][Math.floor(x)] > 0;
-  }
+      document.onkeydown = function (e) {
+        var key = e.keyCode ? e.keyCode : e.which;
 
-  bindKeys() {
-    document.onkeydown = e => {
-      let key = e.keyCode ? e.keyCode : e.which;
+        switch (key) {
+          case 38:
+            _this.speed = 1;
+            break;
+          case 40:
+            _this.speed = -1;
+            break;
+          case 37:
+            _this.direction = -1;
+            break;
+          case 39:
+            _this.direction = 1;
+            break;
+        }
+      };
 
-      switch (key) {
-        case 38:
-          this.speed = 1;
-          break;
-        case 40:
-          this.speed = -1;
-          break;
-        case 37:
-          this.direction = -1;
-          break;
-        case 39:
-          this.direction = 1;
-          break;
-      }
-    };
+      document.onkeyup = function (e) {
+        var key = e.keyCode ? e.keyCode : e.which;
 
-    document.onkeyup = e => {
-      let key = e.keyCode ? e.keyCode : e.which;
+        switch (key) {
+          case 38:
+            _this.speed = 0;
+            break;
+          case 40:
+            _this.speed = 0;
+            break;
+          case 37:
+            _this.direction = 0;
+            break;
+          case 39:
+            _this.direction = 0;
+            break;
+        }
+      };
+    }
+  }]);
 
-      switch (key) {
-        case 38:
-          this.speed = 0;
-          break;
-        case 40:
-          this.speed = 0;
-          break;
-        case 37:
-          this.direction = 0;
-          break;
-        case 39:
-          this.direction = 0;
-          break;
-      }
-    };
-  }
+  return Player;
+}();
 
-}
-/* harmony export (immutable) */ __webpack_exports__["a"] = Player;
-
+exports.default = Player;
 
 /***/ }),
 /* 3 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__map1__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__player__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__camera__ = __webpack_require__(0);
 
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _map = __webpack_require__(1);
 
-class RaycastEngine {
-  constructor(elementId) {
+var _map2 = _interopRequireDefault(_map);
+
+var _player = __webpack_require__(2);
+
+var _player2 = _interopRequireDefault(_player);
+
+var _camera = __webpack_require__(0);
+
+var _camera2 = _interopRequireDefault(_camera);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var RaycastEngine = function () {
+  function RaycastEngine(elementId) {
+    _classCallCheck(this, RaycastEngine);
+
     this.canvas = document.getElementById(elementId);
     this.context = this.canvas.getContext('2d');
     this.width = this.canvas.width;
     this.height = this.canvas.height;
     this.map = {
-      data: __WEBPACK_IMPORTED_MODULE_0__map1__["a" /* default */],
-      width: __WEBPACK_IMPORTED_MODULE_0__map1__["a" /* default */][0].length,
-      height: __WEBPACK_IMPORTED_MODULE_0__map1__["a" /* default */].length
+      data: _map2.default,
+      width: _map2.default[0].length,
+      height: _map2.default.length
     };
-    this.player = new __WEBPACK_IMPORTED_MODULE_1__player__["a" /* default */]({
+    this.player = new _player2.default({
       map: this.map,
       x: 10,
       y: 10,
@@ -217,7 +289,7 @@ class RaycastEngine {
     // Raycast Canvas
     this.raycastCanvas = document.createElement('canvas');
     this.raycastContext = this.raycastCanvas.getContext('2d');
-    this.camera = new __WEBPACK_IMPORTED_MODULE_2__camera__["a" /* default */]({ parent: this.player, canvas: this.canvas, map: this.map, raycastCanvas: this.raycastCanvas });
+    this.camera = new _camera2.default({ parent: this.player, canvas: this.canvas, map: this.map, raycastCanvas: this.raycastCanvas });
     window.deltaTime = 0;
     window.lastUpdate = Date.now();
     document.body.appendChild(this.raycastCanvas);
@@ -225,49 +297,60 @@ class RaycastEngine {
     this.gameLoop();
   }
 
-  update() {
-    this.player.update();
-    this.drawRaycastCanvas();
-    this.camera.update();
-  }
+  _createClass(RaycastEngine, [{
+    key: 'update',
+    value: function update() {
+      this.player.update();
+      this.drawRaycastCanvas();
+      this.camera.update();
+    }
+  }, {
+    key: 'drawRaycastCanvas',
+    value: function drawRaycastCanvas() {
+      var scale = 20;
+      this.raycastCanvas.width = this.map.width * scale;
+      this.raycastCanvas.height = this.map.height * scale;
+      this.raycastContext.clearRect(0, 0, this.map.width * scale, this.map.height * scale);
 
-  drawRaycastCanvas() {
-    const scale = 20;
-    this.raycastCanvas.width = this.map.width * scale;
-    this.raycastCanvas.height = this.map.height * scale;
-    this.raycastContext.clearRect(0, 0, this.map.width * scale, this.map.height * scale);
-
-    for (let y in this.map.data) {
-      for (let x in this.map.data[y]) {
-        if (this.map.data[y][x] > 0) {
-          this.raycastContext.fillStyle = '#ccc';
-          this.raycastContext.fillRect(x * scale, y * scale, scale, scale);
-        } else {
-          this.raycastContext.strokeStyle = '#ccc';
-          this.raycastContext.strokeRect(x * scale, y * scale, scale, scale);
+      for (var y in this.map.data) {
+        for (var x in this.map.data[y]) {
+          if (this.map.data[y][x] > 0) {
+            this.raycastContext.fillStyle = '#ccc';
+            this.raycastContext.fillRect(x * scale, y * scale, scale, scale);
+          } else {
+            this.raycastContext.strokeStyle = '#ccc';
+            this.raycastContext.strokeRect(x * scale, y * scale, scale, scale);
+          }
         }
       }
+
+      var radians = this.player.rotation * Math.PI / 180;
+
+      this.raycastContext.save();
+      this.raycastContext.translate(this.player.x * scale, this.player.y * scale);
+      this.raycastContext.rotate(radians);
+      this.raycastContext.fillStyle = '#000';
+      this.raycastContext.fillRect(-scale / 4, -scale / 4, scale / 2, scale / 2);
+      this.raycastContext.restore();
     }
+  }, {
+    key: 'gameLoop',
+    value: function gameLoop() {
+      var _this = this;
 
-    let radians = this.player.rotation * Math.PI / 180;
+      var currentFrameTime = Date.now();
+      window.deltaTime = (currentFrameTime - window.lastUpdate) / 1000.0; // Convert delta time from milliseconds to seconds
+      window.lastUpdate = currentFrameTime;
+      this.update();
 
-    this.raycastContext.save();
-    this.raycastContext.translate(this.player.x * scale, this.player.y * scale);
-    this.raycastContext.rotate(radians);
-    this.raycastContext.fillStyle = '#000';
-    this.raycastContext.fillRect(-scale / 4, -scale / 4, scale / 2, scale / 2);
-    this.raycastContext.restore();
-  }
+      window.requestAnimationFrame(function () {
+        return _this.gameLoop();
+      });
+    }
+  }]);
 
-  gameLoop() {
-    let currentFrameTime = Date.now();
-    window.deltaTime = (currentFrameTime - window.lastUpdate) / 1000.0; // Convert delta time from milliseconds to seconds
-    window.lastUpdate = currentFrameTime;
-    this.update();
-
-    window.requestAnimationFrame(() => this.gameLoop());
-  }
-}
+  return RaycastEngine;
+}();
 
 window.RaycastEngine = RaycastEngine;
 
