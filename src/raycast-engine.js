@@ -2,6 +2,7 @@ import map1 from './map1'
 import map2 from './map2'
 import Player from './player'
 import Camera from './camera'
+import Textures from './textures'
 
 class RaycastEngine {
   constructor(elementId){
@@ -14,6 +15,7 @@ class RaycastEngine {
       width: map1[0].length,
       height: map1.length
     };
+    this.textures = new Textures();
     this.player = new Player({
       map: this.map,
       x: 10,
@@ -23,12 +25,12 @@ class RaycastEngine {
     // Raycast Canvas
     this.raycastCanvas = document.createElement('canvas')
     this.raycastContext = this.raycastCanvas.getContext('2d');
-    this.camera = new Camera({ parent: this.player, canvas: this.canvas, map: this.map, raycastCanvas: this.raycastCanvas });
+    this.camera = new Camera({ parent: this.player, canvas: this.canvas, map: this.map, raycastCanvas: this.raycastCanvas, textures: this.textures });
     window.deltaTime = 0;
     window.lastUpdate = Date.now();
     document.body.appendChild(this.raycastCanvas);
 
-    this.gameLoop();
+    this.textures.preloadTextures(map1).then(() => this.gameLoop());
   }
 
   update(){

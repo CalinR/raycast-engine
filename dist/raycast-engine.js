@@ -87,7 +87,8 @@ var Camera = function () {
         parent = _ref.parent,
         canvas = _ref.canvas,
         map = _ref.map,
-        raycastCanvas = _ref.raycastCanvas;
+        raycastCanvas = _ref.raycastCanvas,
+        textures = _ref.textures;
 
     _classCallCheck(this, Camera);
 
@@ -98,11 +99,12 @@ var Camera = function () {
     this.x = 0;
     this.y = 0;
     this.rotation = 0;
+    this.textures = textures;
     this.raycastCanvas = raycastCanvas;
     this.raycastContext = this.raycastCanvas.getContext('2d');
-    this.focalLength = this.canvas.height / 2;
     this.columnWidth = 2;
-    this.createRays();
+    this.focalLength = this.canvas.height / this.columnWidth;
+    // this.createRays();
   }
 
   _createClass(Camera, [{
@@ -125,12 +127,44 @@ var Camera = function () {
         var x = -columns / 2 + column;
         var angle = Math.atan2(x, this.focalLength);
         var radians = this.parent.rotation * Math.PI / 180;
-        var z = this.castRay(radians + angle);
+        var hitData = this.castRay(radians + angle);
+        var z = hitData.distance;
+        var texture = hitData.texture;
+
+        // console.log(texture);
         var height = this.canvas.height / z;
         var columnX = column * this.columnWidth;
-        this.context.fillStyle = '#000';
-        this.context.fillRect(columnX, this.canvas.height / 2 - height / 2, this.columnWidth, height);
+        // this.context.fillStyle = '#000';
+        // this.context.fillRect(columnX, (this.canvas.height / 2) - (height / 2), this.columnWidth, height);
+        var imageSlice = this.textures.getTexture(texture.type, texture.offset, this.columnWidth, 1);
+        this.context.drawImage(imageSlice, columnX, this.canvas.height / 2 - height / 2, this.columnWidth, height);
       }
+
+      // let draw = (column) => {
+      //   let x = (-columns / 2 + column);
+      //   let angle = Math.atan2(x, this.focalLength);
+      //   let radians = this.parent.rotation * Math.PI / 180;
+      //   let hitData = this.castRay(radians + angle);
+      //   let z = hitData.distance;
+      //   let texture = hitData.texture;
+      //
+      //
+      //   // console.log(texture);
+      //   let height = this.canvas.height / z;
+      //   let columnX = column * this.columnWidth;
+      //   // this.context.fillStyle = '#000';
+      //   // this.context.fillRect(columnX, (this.canvas.height / 2) - (height / 2), this.columnWidth, height);
+      //   setTimeout(() => {
+      //     let imageSlice = this.textures.getTexture(texture.type, texture.offset, this.columnWidth, 1);
+      //     this.context.drawImage(imageSlice, columnX, (this.canvas.height / 2) - (height / 2), this.columnWidth, height);
+      //     if(column < columns){
+      //       column += 1;
+      //       draw(column);
+      //     }
+      //   }, 100)
+      // }
+      //
+      // draw(0);
     }
   }, {
     key: 'castRay',
@@ -142,28 +176,35 @@ var Camera = function () {
       var up = angle < 0 || angle > Math.PI;
       var sin = Math.sin(angle);
       var cos = Math.cos(angle);
-      var slope = sin / cos;
-
-      var x = right ? Math.ceil(this.parent.x) : Math.floor(this.parent.x);
-      var y = this.parent.y + (x - this.parent.x) * slope;
-
-      var xOffset = right ? 1 : -1;
-      var yOffset = xOffset * slope;
-
       var xHit = null;
       var yHit = null;
       var distance = null;
       var xDistance = 10000;
       var yDistance = 10000;
+      var texture = {
+        type: 0,
+        offset: 0
+      };
+
+      // Loop through grid horizontally
+      var slope = sin / cos;
+      var x = right ? Math.ceil(this.parent.x) : Math.floor(this.parent.x);
+      var y = this.parent.y + (x - this.parent.x) * slope;
+      var xOffset = right ? 1 : -1;
+      var yOffset = xOffset * slope;
 
       while (x < this.map.width && x > 0 && y < this.map.height && y > 0) {
-        var mapCheck = this.map.data[Math.floor(y)][Math.floor(x + (right ? 0 : -1))];
+        var mapX = Math.floor(x + (right ? 0 : -1));
+        var mapY = Math.floor(y);
+        var mapCheck = this.map.data[mapY][mapX];
 
         if (mapCheck > 0) {
           xHit = x;
           yHit = y;
           xDistance = x - this.parent.x;
           yDistance = y - this.parent.y;
+          texture.type = mapCheck;
+          texture.offset = yHit - mapY;
 
           distance = xDistance * xDistance + yDistance * yDistance;
           break;
@@ -173,11 +214,12 @@ var Camera = function () {
         y += yOffset;
       }
 
+      // Loop through grid vertically
       slope = cos / sin;
-      yOffset = up ? -1 : 1;
-      xOffset = yOffset * slope;
       y = up ? Math.floor(this.parent.y) : Math.ceil(this.parent.y);
       x = this.parent.x + (y - this.parent.y) * slope;
+      yOffset = up ? -1 : 1;
+      xOffset = yOffset * slope;
 
       while (x < this.map.width && x > 0 && y < this.map.height && y > 0) {
         xDistance = x - this.parent.x;
@@ -185,10 +227,15 @@ var Camera = function () {
         var distanceCheck = xDistance * xDistance + yDistance * yDistance;
 
         if (!distance || distanceCheck < distance) {
-          var _mapCheck = this.map.data[Math.floor(y + (up ? -1 : 0))][Math.floor(x)];
+          var _mapX = Math.floor(x);
+          var _mapY = Math.floor(y + (up ? -1 : 0));
+          var _mapCheck = this.map.data[_mapY][_mapX];
           if (_mapCheck > 0) {
             xHit = x;
             yHit = y;
+            texture.type = _mapCheck;
+            texture.offset = xHit - _mapX;
+
             distance = distanceCheck;
             break;
           }
@@ -213,10 +260,16 @@ var Camera = function () {
         distance = Math.sqrt(distance);
         distance = distance * Math.cos(this.parent.rotation * Math.PI / 180 - angle);
 
-        return distance;
+        return {
+          distance: distance,
+          texture: texture
+        };
       }
 
-      return 100000;
+      return {
+        distance: 10000,
+        texture: texture
+      };
     }
   }]);
 
@@ -382,12 +435,18 @@ var _camera = __webpack_require__(0);
 
 var _camera2 = _interopRequireDefault(_camera);
 
+var _textures = __webpack_require__(6);
+
+var _textures2 = _interopRequireDefault(_textures);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var RaycastEngine = function () {
   function RaycastEngine(elementId) {
+    var _this = this;
+
     _classCallCheck(this, RaycastEngine);
 
     this.canvas = document.getElementById(elementId);
@@ -399,6 +458,7 @@ var RaycastEngine = function () {
       width: _map2.default[0].length,
       height: _map2.default.length
     };
+    this.textures = new _textures2.default();
     this.player = new _player2.default({
       map: this.map,
       x: 10,
@@ -408,12 +468,14 @@ var RaycastEngine = function () {
     // Raycast Canvas
     this.raycastCanvas = document.createElement('canvas');
     this.raycastContext = this.raycastCanvas.getContext('2d');
-    this.camera = new _camera2.default({ parent: this.player, canvas: this.canvas, map: this.map, raycastCanvas: this.raycastCanvas });
+    this.camera = new _camera2.default({ parent: this.player, canvas: this.canvas, map: this.map, raycastCanvas: this.raycastCanvas, textures: this.textures });
     window.deltaTime = 0;
     window.lastUpdate = Date.now();
     document.body.appendChild(this.raycastCanvas);
 
-    this.gameLoop();
+    this.textures.preloadTextures(_map2.default).then(function () {
+      return _this.gameLoop();
+    });
   }
 
   _createClass(RaycastEngine, [{
@@ -455,7 +517,7 @@ var RaycastEngine = function () {
   }, {
     key: 'gameLoop',
     value: function gameLoop() {
-      var _this = this;
+      var _this2 = this;
 
       var currentFrameTime = Date.now();
       window.deltaTime = (currentFrameTime - window.lastUpdate) / 1000.0; // Convert delta time from milliseconds to seconds
@@ -463,7 +525,7 @@ var RaycastEngine = function () {
       this.update();
 
       window.requestAnimationFrame(function () {
-        return _this.gameLoop();
+        return _this2.gameLoop();
       });
     }
   }]);
@@ -486,6 +548,114 @@ Object.defineProperty(exports, "__esModule", {
 var map1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]];
 
 exports.default = map1;
+
+/***/ }),
+/* 5 */,
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var textures = ['w_1.png', 'w_2.png', 'w_3.png', 'w_4.png', 'w_5.png'];
+
+var Textures = function () {
+  function Textures() {
+    _classCallCheck(this, Textures);
+
+    this.tiles = [];
+    this.textures = [];
+    this.canvas = document.createElement('canvas');
+    this.context = this.canvas.getContext('2d');
+    // this.canvas.style.width = '50px';
+    // document.body.appendChild(this.canvas);
+  }
+
+  _createClass(Textures, [{
+    key: 'getUniqueTiles',
+    value: function getUniqueTiles(map) {
+      var tiles = [];
+      for (var y = 0; y < map.length; y++) {
+        for (var x = 0; x < map[y].length; x++) {
+          var tile = map[y][x];
+          if (tiles.indexOf(tile) == -1 && tile > 0) {
+            tiles[tile] = tile;
+          }
+        }
+      }
+
+      return tiles.map(function (index) {
+        return textures[index - 1];
+      });
+    }
+  }, {
+    key: 'preloadTextures',
+    value: function preloadTextures(map) {
+      var _this = this;
+
+      return new Promise(function (resolve, reject) {
+        _this.tiles = _this.getUniqueTiles(map);
+
+        var _loop = function _loop(t) {
+          var tile = _this.tiles[t];
+          if (tile) {
+            (function () {
+              var image = new Image();
+              image.src = './assets/' + tile;
+              image.onload = function () {
+                _this.textures[t] = image;
+                if (_this.textures.length >= _this.tiles.length) {
+                  resolve(_this.textures);
+                }
+              };
+            })();
+          }
+        };
+
+        for (var t = 0; t < _this.tiles.length; t++) {
+          _loop(t);
+        }
+      });
+    }
+  }, {
+    key: 'getTexture',
+    value: function getTexture(tile, offset, tileWidth, side) {
+      // console.log(tile);
+      var width = this.textures[tile].width;
+      var height = this.textures[tile].width;
+      var texture = this.textures[tile];
+      var x = Math.round(width * offset - tileWidth / 2);
+
+      // console.log(x);
+
+      // console.log(x);
+
+      this.canvas.width = tileWidth;
+      this.canvas.height = height;
+      this.context.clearRect(0, 0, tileWidth, height);
+      this.context.drawImage(texture, 0, 0, width, height * 2);
+      this.context.drawImage(texture, -x, 0, width, height * 2);
+      this.context.drawImage(texture, width - x, 0, width, height * 2);
+      // debugger;
+
+      return this.canvas;
+      // console.log(width, height);
+      // console.log(`offset: ${offset}`, `side: ${side}`);
+    }
+  }]);
+
+  return Textures;
+}();
+
+exports.default = Textures;
 
 /***/ })
 /******/ ]);
