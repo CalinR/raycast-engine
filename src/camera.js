@@ -40,7 +40,7 @@ export default class Camera {
       let height = this.canvas.height / z;
       let columnX = column * this.columnWidth;
       let columnY = (this.canvas.height / 2) - (height / 2);
-      this.textures.getTexture(texture.type, texture.offset, this.columnWidth, 1, this.context, columnX, columnY, height);
+      this.textures.getTexture(texture.type, texture.offset, this.columnWidth, hitData.side, this.context, columnX, columnY, height);
     }
   }
 
@@ -68,6 +68,7 @@ export default class Camera {
       type: 0,
       offset: 0
     };
+    let sideHit = 0;
 
     // Loop through grid horizontally
     let slope = sin / cos;
@@ -80,8 +81,54 @@ export default class Camera {
       let mapX = Math.floor(x + (right ? 0 : -1));
       let mapY = Math.floor(y);
       let mapCheck = this.map.data[mapY][mapX];
+      let prevCheck = null;
+      let afterCheck = null;
+      let beforeY = null;
+      let afterY = null;
 
-      if(mapCheck > 0){
+      if(x > 1){
+        prevCheck = this.map.data[mapY][mapX-1];
+      }
+      if(x < this.map.data[0].length-1){
+        afterCheck = this.map.data[mapY][mapX+1];
+      }
+
+      if(y > 1){
+        beforeY = this.map.data[mapY-1][mapX];
+      }
+      if(y < this.map.data.length-1){
+        afterY = this.map.data[mapY+1][mapX];
+      }
+
+      if(this.map.doors.indexOf(mapCheck) > -1 && prevCheck == 0 && afterCheck == 0){
+        let doorOffset = up ? -.5 : .5;
+        xHit = x + doorOffset * slope;
+        yHit = y + doorOffset * slope;
+        mapX = Math.floor(xHit);
+        mapY = Math.floor(yHit);
+        mapCheck = this.map.data[mapY][mapX];
+        if(this.map.doors.indexOf(mapCheck) > -1){
+          xDistance = xDistance + doorOffset;
+          yDistance = yDistance + (doorOffset * slope);
+          texture.type = mapCheck;
+          texture.offset = xHit - mapX;
+          sideHit = 1;
+          distance = xDistance * xDistance + yDistance * yDistance;
+        }
+        break;
+      }
+      else if(this.map.doors.indexOf(prevCheck) > -1 || this.map.doors.indexOf(afterCheck) > -1){
+        xHit = x;
+        yHit = y;
+        xDistance = x - this.parent.x;
+        yDistance = y - this.parent.y;
+        texture.type = 0;
+        texture.offset = yHit - mapY;
+
+        distance = xDistance * xDistance + yDistance * yDistance;
+        break;
+      }
+      else if(mapCheck > 0){
         xHit = x;
         yHit = y;
         xDistance = x - this.parent.x;
@@ -113,11 +160,39 @@ export default class Camera {
         let mapX = Math.floor(x);
         let mapY = Math.floor(y + (up ? -1 : 0));
         let mapCheck = this.map.data[mapY][mapX];
-        if(mapCheck > 0){
+        let prevCheck = null;
+        let afterCheck = null;
+
+        if(y > 1){
+          prevCheck = this.map.data[mapY-1][mapX];
+        }
+        if(y < this.map.data.length-1){
+          afterCheck = this.map.data[mapY+1][mapX];
+        }
+
+        if(this.map.doors.indexOf(mapCheck) > -1 && prevCheck == 0 && afterCheck == 0){
+          let doorOffset = up ? -.5 : .5;
+          yHit = y + doorOffset;
+          xHit = x + doorOffset * slope;
+          mapX = Math.floor(xHit);
+          mapY = Math.floor(yHit);
+          mapCheck = this.map.data[mapY][mapX];
+          if(this.map.doors.indexOf(mapCheck) > -1){
+            xDistance = xDistance + (doorOffset * slope);
+            yDistance = yDistance + doorOffset;
+            texture.type = mapCheck;
+            texture.offset = xHit - mapX;
+            sideHit = 1;
+            distance = xDistance * xDistance + yDistance * yDistance;
+          }
+          break;
+        }
+        else if(mapCheck > 0){
           xHit = x;
           yHit = y;
           texture.type = mapCheck;
           texture.offset = xHit - mapX;
+          sideHit = 1;
 
           distance = distanceCheck;
           break;
@@ -149,13 +224,15 @@ export default class Camera {
 
       return {
         distance: distance,
-        texture: texture
+        texture: texture,
+        side: sideHit
       };
     }
 
     return {
       distance: 10000,
-      texture: texture
+      texture: texture,
+      side: sideHit
     };
 
   }

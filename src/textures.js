@@ -1,4 +1,13 @@
-const textures = ['w_1.png', 'w_2.png', 'w_3.png', 'w_4.png', 'w_5.png'];
+// const textures = ['w_1.png', 'w_2.png', 'w_3.png', 'w_4.png', 'w_5.png'];
+const textures = {
+  0: 'd_0.png',
+  1: 'w_1.png',
+  2: 'w_2.png',
+  3: 'w_3.png',
+  4: 'w_4.png',
+  5: 'w_5.png',
+  6: 'd_1.png'
+}
 
 export default class Textures {
   constructor(){
@@ -17,9 +26,10 @@ export default class Textures {
         }
       }
     }
+    tiles[0] = 0;
 
     return tiles.map((index) => {
-      return textures[index-1];
+      return textures[index]
     });
   }
 
@@ -45,6 +55,7 @@ export default class Textures {
               context: context
             }
             if(this.textures.length >= this.tiles.length){
+              console.log(this.textures);
               resolve(this.textures);
             }
           }
@@ -54,10 +65,16 @@ export default class Textures {
   }
 
   getTexture(tile, offset, tileWidth, side, context, columnX, columnY, tileHeight){
+    // console.log(tile);
     let width = this.textures[tile].width;
     let height = this.textures[tile].width;
     let texture = this.textures[tile];
     let x = Math.round((width * offset) - (tileWidth / 2)) + width;
-    context.drawImage(this.canvases[tile].canvas, x, 0, tileWidth, height, columnX, columnY, tileWidth, tileHeight);
+    let y = 0;
+
+    if(side > 0){
+      y = width;
+    }
+    context.drawImage(this.canvases[tile].canvas, x, y, tileWidth, height, columnX, columnY, tileWidth, tileHeight);
   }
 }

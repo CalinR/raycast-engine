@@ -12,15 +12,16 @@ class RaycastEngine {
     this.height = this.canvas.height;
     this.map = {
       data: map1,
+      doors: [6],
       width: map1[0].length,
       height: map1.length
     };
     this.textures = new Textures();
     this.player = new Player({
       map: this.map,
-      x: 10,
-      y: 10,
-      rotation: 0
+      x: 8,
+      y: 14,
+      rotation: 90
     });
     this.devMode = devMode;
     this.raycastCanvas = null;

@@ -139,7 +139,7 @@ var Camera = function () {
         var height = this.canvas.height / z;
         var columnX = column * this.columnWidth;
         var columnY = this.canvas.height / 2 - height / 2;
-        this.textures.getTexture(texture.type, texture.offset, this.columnWidth, 1, this.context, columnX, columnY, height);
+        this.textures.getTexture(texture.type, texture.offset, this.columnWidth, hitData.side, this.context, columnX, columnY, height);
       }
     }
   }, {
@@ -169,6 +169,7 @@ var Camera = function () {
         type: 0,
         offset: 0
       };
+      var sideHit = 0;
 
       // Loop through grid horizontally
       var slope = sin / cos;
@@ -181,8 +182,52 @@ var Camera = function () {
         var mapX = Math.floor(x + (right ? 0 : -1));
         var mapY = Math.floor(y);
         var mapCheck = this.map.data[mapY][mapX];
+        var prevCheck = null;
+        var afterCheck = null;
+        var beforeY = null;
+        var afterY = null;
 
-        if (mapCheck > 0) {
+        if (x > 1) {
+          prevCheck = this.map.data[mapY][mapX - 1];
+        }
+        if (x < this.map.data[0].length - 1) {
+          afterCheck = this.map.data[mapY][mapX + 1];
+        }
+
+        if (y > 1) {
+          beforeY = this.map.data[mapY - 1][mapX];
+        }
+        if (y < this.map.data.length - 1) {
+          afterY = this.map.data[mapY + 1][mapX];
+        }
+
+        if (this.map.doors.indexOf(mapCheck) > -1 && prevCheck == 0 && afterCheck == 0) {
+          var doorOffset = up ? -.5 : .5;
+          xHit = x + doorOffset * slope;
+          yHit = y + doorOffset * slope;
+          mapX = Math.floor(xHit);
+          mapY = Math.floor(yHit);
+          mapCheck = this.map.data[mapY][mapX];
+          if (this.map.doors.indexOf(mapCheck) > -1) {
+            xDistance = xDistance + doorOffset;
+            yDistance = yDistance + doorOffset * slope;
+            texture.type = mapCheck;
+            texture.offset = xHit - mapX;
+            sideHit = 1;
+            distance = xDistance * xDistance + yDistance * yDistance;
+          }
+          break;
+        } else if (this.map.doors.indexOf(prevCheck) > -1 || this.map.doors.indexOf(afterCheck) > -1) {
+          xHit = x;
+          yHit = y;
+          xDistance = x - this.parent.x;
+          yDistance = y - this.parent.y;
+          texture.type = 0;
+          texture.offset = yHit - mapY;
+
+          distance = xDistance * xDistance + yDistance * yDistance;
+          break;
+        } else if (mapCheck > 0) {
           xHit = x;
           yHit = y;
           xDistance = x - this.parent.x;
@@ -214,11 +259,38 @@ var Camera = function () {
           var _mapX = Math.floor(x);
           var _mapY = Math.floor(y + (up ? -1 : 0));
           var _mapCheck = this.map.data[_mapY][_mapX];
-          if (_mapCheck > 0) {
+          var _prevCheck = null;
+          var _afterCheck = null;
+
+          if (y > 1) {
+            _prevCheck = this.map.data[_mapY - 1][_mapX];
+          }
+          if (y < this.map.data.length - 1) {
+            _afterCheck = this.map.data[_mapY + 1][_mapX];
+          }
+
+          if (this.map.doors.indexOf(_mapCheck) > -1 && _prevCheck == 0 && _afterCheck == 0) {
+            var _doorOffset = up ? -.5 : .5;
+            yHit = y + _doorOffset;
+            xHit = x + _doorOffset * slope;
+            _mapX = Math.floor(xHit);
+            _mapY = Math.floor(yHit);
+            _mapCheck = this.map.data[_mapY][_mapX];
+            if (this.map.doors.indexOf(_mapCheck) > -1) {
+              xDistance = xDistance + _doorOffset * slope;
+              yDistance = yDistance + _doorOffset;
+              texture.type = _mapCheck;
+              texture.offset = xHit - _mapX;
+              sideHit = 1;
+              distance = xDistance * xDistance + yDistance * yDistance;
+            }
+            break;
+          } else if (_mapCheck > 0) {
             xHit = x;
             yHit = y;
             texture.type = _mapCheck;
             texture.offset = xHit - _mapX;
+            sideHit = 1;
 
             distance = distanceCheck;
             break;
@@ -250,13 +322,15 @@ var Camera = function () {
 
         return {
           distance: distance,
-          texture: texture
+          texture: texture,
+          side: sideHit
         };
       }
 
       return {
         distance: 10000,
-        texture: texture
+        texture: texture,
+        side: sideHit
       };
     }
   }]);
@@ -276,7 +350,7 @@ exports.default = Camera;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-var map1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 3, 0, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 4, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 3, 3, 4, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]];
+var map1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 3, 0, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 2], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 6, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 4, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 3, 3, 4, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]];
 
 exports.default = map1;
 
@@ -427,7 +501,16 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var textures = ['w_1.png', 'w_2.png', 'w_3.png', 'w_4.png', 'w_5.png'];
+// const textures = ['w_1.png', 'w_2.png', 'w_3.png', 'w_4.png', 'w_5.png'];
+var textures = {
+  0: 'd_0.png',
+  1: 'w_1.png',
+  2: 'w_2.png',
+  3: 'w_3.png',
+  4: 'w_4.png',
+  5: 'w_5.png',
+  6: 'd_1.png'
+};
 
 var Textures = function () {
   function Textures() {
@@ -450,9 +533,10 @@ var Textures = function () {
           }
         }
       }
+      tiles[0] = 0;
 
       return tiles.map(function (index) {
-        return textures[index - 1];
+        return textures[index];
       });
     }
   }, {
@@ -483,6 +567,7 @@ var Textures = function () {
                   context: context
                 };
                 if (_this.textures.length >= _this.tiles.length) {
+                  console.log(_this.textures);
                   resolve(_this.textures);
                 }
               };
@@ -498,11 +583,17 @@ var Textures = function () {
   }, {
     key: 'getTexture',
     value: function getTexture(tile, offset, tileWidth, side, context, columnX, columnY, tileHeight) {
+      // console.log(tile);
       var width = this.textures[tile].width;
       var height = this.textures[tile].width;
       var texture = this.textures[tile];
       var x = Math.round(width * offset - tileWidth / 2) + width;
-      context.drawImage(this.canvases[tile].canvas, x, 0, tileWidth, height, columnX, columnY, tileWidth, tileHeight);
+      var y = 0;
+
+      if (side > 0) {
+        y = width;
+      }
+      context.drawImage(this.canvases[tile].canvas, x, y, tileWidth, height, columnX, columnY, tileWidth, tileHeight);
     }
   }]);
 
@@ -556,15 +647,16 @@ var RaycastEngine = function () {
     this.height = this.canvas.height;
     this.map = {
       data: _map2.default,
+      doors: [6],
       width: _map2.default[0].length,
       height: _map2.default.length
     };
     this.textures = new _textures2.default();
     this.player = new _player2.default({
       map: this.map,
-      x: 10,
-      y: 10,
-      rotation: 0
+      x: 8,
+      y: 14,
+      rotation: 90
     });
     this.devMode = devMode;
     this.raycastCanvas = null;
