@@ -129,6 +129,21 @@ export default class Camera {
         let mapY = vertical ? Math.floor(y + (up ? -1 : 0)) : Math.floor(y);
         let mapCheck = this.map.data[mapY][mapX];
 
+        // Check if grid is a door
+        if(this.map.doors.indexOf(mapCheck)>-1){
+          let testX = x + (xOffset / 4);
+          let testY = y + (yOffset / 4);
+          xDistance = testX - this.parent.x;
+          yDistance = testY - this.parent.y;
+          hitData.xHit = testX;
+          hitData.yHit = testY;
+          hitData.texture.type = mapCheck;
+          hitData.side = vertical ? 1 : 0;
+          hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
+          hitData.distance = xDistance * xDistance + yDistance * yDistance;
+          break;
+        }
+
         if(mapCheck > 0){
           hitData.xHit = x;
           hitData.yHit = y;
