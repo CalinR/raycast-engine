@@ -54,186 +54,97 @@ export default class Camera {
   castRay(angle){
     let twoPI = Math.PI * 2;
     angle %= twoPI;
-  	if (angle < 0) angle += twoPI;
-    let right = angle > twoPI * 0.75 || angle < twoPI * 0.25;
-    let up = (angle < 0 || angle > Math.PI);
-    let sin = Math.sin(angle);
-    let cos = Math.cos(angle);
-    let xHit = null;
-    let yHit = null;
-    let distance = null;
-    let xDistance = 10000;
-    let yDistance = 10000;
-    let texture = {
-      type: 0,
-      offset: 0
-    };
-    let sideHit = 0;
+    if (angle < 0) angle += twoPI;
 
-    // Loop through grid horizontally
-    let slope = sin / cos;
-    let x = right ? Math.ceil(this.parent.x) : Math.floor(this.parent.x);
-    let y = this.parent.y + (x - this.parent.x) * slope;
-    let xOffset = right ? 1 : -1;
-    let yOffset = xOffset * slope;
+    let hitData = this.traverseGrid(angle, false);
+    hitData = this.traverseGrid(angle, true, hitData);
 
-    while(x < this.map.width && x > 0 && y < this.map.height && y > 0){
-      let mapX = Math.floor(x + (right ? 0 : -1));
-      let mapY = Math.floor(y);
-      let mapCheck = this.map.data[mapY][mapX];
-      let prevCheck = null;
-      let afterCheck = null;
-      let beforeY = null;
-      let afterY = null;
-
-      if(x > 1){
-        prevCheck = this.map.data[mapY][mapX-1];
-      }
-      if(x < this.map.data[0].length-1){
-        afterCheck = this.map.data[mapY][mapX+1];
-      }
-
-      if(y > 1){
-        beforeY = this.map.data[mapY-1][mapX];
-      }
-      if(y < this.map.data.length-1){
-        afterY = this.map.data[mapY+1][mapX];
-      }
-
-      if(this.map.doors.indexOf(mapCheck) > -1 && prevCheck == 0 && afterCheck == 0){
-        let doorOffset = up ? -.5 : .5;
-        xHit = x + doorOffset * slope;
-        yHit = y + doorOffset * slope;
-        mapX = Math.floor(xHit);
-        mapY = Math.floor(yHit);
-        mapCheck = this.map.data[mapY][mapX];
-        if(this.map.doors.indexOf(mapCheck) > -1){
-          xDistance = xDistance + doorOffset;
-          yDistance = yDistance + (doorOffset * slope);
-          texture.type = mapCheck;
-          texture.offset = xHit - mapX;
-          sideHit = 1;
-          distance = xDistance * xDistance + yDistance * yDistance;
-        }
-        break;
-      }
-      else if(this.map.doors.indexOf(prevCheck) > -1 || this.map.doors.indexOf(afterCheck) > -1){
-        xHit = x;
-        yHit = y;
-        xDistance = x - this.parent.x;
-        yDistance = y - this.parent.y;
-        texture.type = 0;
-        texture.offset = yHit - mapY;
-
-        distance = xDistance * xDistance + yDistance * yDistance;
-        break;
-      }
-      else if(mapCheck > 0){
-        xHit = x;
-        yHit = y;
-        xDistance = x - this.parent.x;
-        yDistance = y - this.parent.y;
-        texture.type = mapCheck;
-        texture.offset = yHit - mapY;
-
-        distance = xDistance * xDistance + yDistance * yDistance;
-        break;
-      }
-
-      x += xOffset;
-      y += yOffset;
-    }
-
-    // Loop through grid vertically
-    slope = cos / sin;
-    y = up ? Math.floor(this.parent.y) : Math.ceil(this.parent.y);
-    x = this.parent.x + (y - this.parent.y) * slope;
-    yOffset = up ? -1 : 1;
-    xOffset = yOffset * slope;
-
-    while(x < this.map.width && x > 0 && y < this.map.height && y > 0){
-      xDistance = x - this.parent.x;
-      yDistance = y - this.parent.y;
-      let distanceCheck = xDistance * xDistance + yDistance * yDistance;
-
-      if(!distance || distanceCheck < distance){
-        let mapX = Math.floor(x);
-        let mapY = Math.floor(y + (up ? -1 : 0));
-        let mapCheck = this.map.data[mapY][mapX];
-        let prevCheck = null;
-        let afterCheck = null;
-
-        if(y > 1){
-          prevCheck = this.map.data[mapY-1][mapX];
-        }
-        if(y < this.map.data.length-1){
-          afterCheck = this.map.data[mapY+1][mapX];
-        }
-
-        if(this.map.doors.indexOf(mapCheck) > -1 && prevCheck == 0 && afterCheck == 0){
-          let doorOffset = up ? -.5 : .5;
-          yHit = y + doorOffset;
-          xHit = x + doorOffset * slope;
-          mapX = Math.floor(xHit);
-          mapY = Math.floor(yHit);
-          mapCheck = this.map.data[mapY][mapX];
-          if(this.map.doors.indexOf(mapCheck) > -1){
-            xDistance = xDistance + (doorOffset * slope);
-            yDistance = yDistance + doorOffset;
-            texture.type = mapCheck;
-            texture.offset = xHit - mapX;
-            sideHit = 1;
-            distance = xDistance * xDistance + yDistance * yDistance;
-          }
-          break;
-        }
-        else if(mapCheck > 0){
-          xHit = x;
-          yHit = y;
-          texture.type = mapCheck;
-          texture.offset = xHit - mapX;
-          sideHit = 1;
-
-          distance = distanceCheck;
-          break;
-        }
-      }
-
-      x += xOffset;
-      y += yOffset;
-    }
-
-    if(this.raycastCanvas){
-      this.raycastContext.fillStyle = 'red';
-      this.raycastContext.fillRect(xHit * 8, yHit * 8, 4, 4);
-    }
-
-    if(xHit && yHit){
+    if(hitData.xHit && hitData.yHit){
       if(this.raycastCanvas){
         this.raycastContext.save();
         this.raycastContext.globalAlpha = 0.2;
         this.raycastContext.beginPath();
         this.raycastContext.moveTo(this.parent.x * 8,this.parent.y * 8);
-        this.raycastContext.lineTo(xHit * 8, yHit * 8);
+        this.raycastContext.lineTo(hitData.xHit * 8, hitData.yHit * 8);
         this.raycastContext.strokeStyle = 'red';
         this.raycastContext.stroke();
         this.raycastContext.restore();
       }
-      distance = Math.sqrt(distance);
-  		distance = distance * Math.cos((this.parent.rotation * Math.PI / 180) - angle);
+      hitData.distance = Math.sqrt(hitData.distance);
+  		hitData.distance = hitData.distance * Math.cos((this.parent.rotation * Math.PI / 180) - angle);
 
       return {
-        distance: distance,
-        texture: texture,
-        side: sideHit
+        distance: hitData.distance,
+        texture: hitData.texture,
+        side: hitData.side
       };
     }
 
     return {
       distance: 10000,
-      texture: texture,
-      side: sideHit
+      texture: hitData.texture,
+      side: hitData.side
     };
+  }
+
+  traverseGrid(angle, vertical = false, oldHitData = null){
+    let twoPI = Math.PI * 2;
+    let right = angle > twoPI * 0.75 || angle < twoPI * 0.25;
+    let up = (angle < 0 || angle > Math.PI);
+    let sin = Math.sin(angle);
+    let cos = Math.cos(angle);
+    let xDistance = 10000;
+    let yDistance = 10000;
+    let slope = vertical ? cos / sin : sin / cos;
+    let x = right ? Math.ceil(this.parent.x) : Math.floor(this.parent.x);
+    let y = this.parent.y + (x - this.parent.x) * slope;
+    let xOffset = right ? 1 : -1;
+    let yOffset = xOffset * slope;
+    if(vertical){
+      y = up ? Math.floor(this.parent.y) : Math.ceil(this.parent.y);
+      x = this.parent.x + (y - this.parent.y) * slope;
+      yOffset = up ? -1 : 1;
+      xOffset = yOffset * slope;
+    }
+    let hitData = {
+      distance: null,
+      texture: {
+        type: 0,
+        offset: 0
+      },
+      side: 0,
+      xHit: null,
+      yHit: null
+    }
+    if(oldHitData){
+      hitData = oldHitData;
+    }
+    while(x < this.map.width && x > 0 && y < this.map.height && y > 0){
+      xDistance = x - this.parent.x;
+      yDistance = y - this.parent.y;
+      let distanceCheck = xDistance * xDistance + yDistance * yDistance;
+
+      if(!vertical || !hitData.distance || distanceCheck < hitData.distance){
+        let mapX = vertical ? Math.floor(x) : Math.floor(x + (right ? 0 : -1));
+        let mapY = vertical ? Math.floor(y + (up ? -1 : 0)) : Math.floor(y);
+        let mapCheck = this.map.data[mapY][mapX];
+
+        if(mapCheck > 0){
+          hitData.xHit = x;
+          hitData.yHit = y;
+          hitData.texture.type = mapCheck;
+          hitData.side = vertical ? 1 : 0;
+          hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
+          hitData.distance = distanceCheck;
+          break;
+        }
+      }
+
+      x += xOffset;
+      y += yOffset;
+    }
+
+    return hitData;
 
   }
 }

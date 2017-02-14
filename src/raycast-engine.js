@@ -5,7 +5,7 @@ import Camera from './camera'
 import Textures from './textures'
 
 class RaycastEngine {
-  constructor(elementId, devMode){
+  constructor(elementId, debugMode){
     this.canvas = document.getElementById(elementId);
     this.context = this.canvas.getContext('2d');
     this.width = this.canvas.width;
@@ -23,10 +23,10 @@ class RaycastEngine {
       y: 14,
       rotation: 90
     });
-    this.devMode = devMode;
+    this.debugMode = debugMode;
     this.raycastCanvas = null;
 
-    if(this.devMode){
+    if(this.debugMode){
       this.raycastCanvas = document.createElement('canvas')
       this.raycastContext = this.raycastCanvas.getContext('2d');
       document.body.appendChild(this.raycastCanvas);
@@ -41,7 +41,7 @@ class RaycastEngine {
 
   update(){
     this.player.update();
-    if(this.devMode){
+    if(this.debugMode){
       this.drawRaycastCanvas();
     }
     this.camera.update();

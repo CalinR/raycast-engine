@@ -55,7 +55,6 @@ export default class Textures {
               context: context
             }
             if(this.textures.length >= this.tiles.length){
-              console.log(this.textures);
               resolve(this.textures);
             }
           }
