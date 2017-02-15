@@ -1,5 +1,6 @@
-import map1 from './map1'
+import {map1, map1_doors} from './map1'
 import map2 from './map2'
+import mapBuilder from './map-builder'
 import Player from './player'
 import Camera from './camera'
 import Textures from './textures'
@@ -10,18 +11,13 @@ class RaycastEngine {
     this.context = this.canvas.getContext('2d');
     this.width = this.canvas.width;
     this.height = this.canvas.height;
-    this.map = {
-      data: map1,
-      doors: [6],
-      width: map1[0].length,
-      height: map1.length
-    };
+    this.map = mapBuilder(map1, map1_doors);
     this.textures = new Textures();
     this.player = new Player({
       map: this.map,
-      x: 8,
-      y: 14,
-      rotation: 90
+      x: 10,
+      y: 10,
+      rotation:0
     });
     this.debugMode = debugMode;
     this.raycastCanvas = null;

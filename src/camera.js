@@ -129,21 +129,74 @@ export default class Camera {
         let mapY = vertical ? Math.floor(y + (up ? -1 : 0)) : Math.floor(y);
         let mapCheck = this.map.data[mapY][mapX];
 
-        // Check if grid is a door
-        if(this.map.doors.indexOf(mapCheck)>-1){
-          let testX = x + (xOffset / 4);
-          let testY = y + (yOffset / 4);
-          xDistance = testX - this.parent.x;
-          yDistance = testY - this.parent.y;
-          hitData.xHit = testX;
-          hitData.yHit = testY;
-          hitData.texture.type = mapCheck;
-          hitData.side = vertical ? 1 : 0;
-          hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
-          hitData.distance = xDistance * xDistance + yDistance * yDistance;
-          break;
+
+        // Check if tile is a door
+        if(this.checkIfDoor(mapCheck) && !mapCheck.opened){
+          let testX = x + (xOffset / 2);
+          let testY = y + (yOffset / 2);
+          let testMapX = Math.floor(testX);
+          let testMapY = Math.floor(testY);
+
+          if(testMapX > 0 && testMapX < this.map.width && testMapY > 0 && testMapY < this.map.height){
+            if(this.checkIfDoor(this.map.data[testMapY][testMapX])){
+              xDistance = testX - this.parent.x;
+              yDistance = testY - this.parent.y;
+              hitData.xHit = testX;
+              hitData.yHit = testY;
+              hitData.texture.type = mapCheck.tile;
+              hitData.side = vertical ? 1 : 0;
+              hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
+              hitData.distance = xDistance * xDistance + yDistance * yDistance;
+              break;
+            }
+          }
         }
 
+        // Check if neighbouring tiles are doors
+        if(vertical && mapCheck > 0){
+          let prevMapCheck = this.map.data[mapY][mapX];
+          let afterMapCheck = this.map.data[mapY][mapX];
+
+          if(mapY-1 > 0 && mapY+1 < this.map.height){
+            prevMapCheck = this.map.data[mapY + (up ? 1 : -1)][mapX];
+            afterMapCheck = this.map.data[mapY + (up ? -1 : 1)][mapX];
+          }
+
+          if(this.checkIfDoor(prevMapCheck) || this.checkIfDoor(afterMapCheck)){
+            hitData.xHit = x;
+            hitData.yHit = y;
+            hitData.texture.type = 0;
+            hitData.side = vertical ? 1 : 0;
+            hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
+            hitData.distance = distanceCheck;
+
+            break;
+          }
+        }
+        // Check if neighbouring tiles are doors
+        else if (!vertical && mapCheck > 0){
+          let prevMapCheck = this.map.data[mapY][mapX];
+          let afterMapCheck = this.map.data[mapY][mapX];
+
+          if(mapX-1 > 0 && mapX+1 < this.map.width){
+            prevMapCheck = this.map.data[mapY][mapX + (right ? -1 : 1)];
+            afterMapCheck = this.map.data[mapY][mapX + (right ? -1 : 1)];
+          }
+
+          if(this.checkIfDoor(prevMapCheck) || this.checkIfDoor(afterMapCheck)){
+            hitData.xHit = x;
+            hitData.yHit = y;
+            hitData.texture.type = 0;
+            hitData.side = vertical ? 1 : 0;
+            hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
+            hitData.distance = distanceCheck;
+
+            break;
+          }
+        }
+        
+
+        // Check if tile is a wall
         if(mapCheck > 0){
           hitData.xHit = x;
           hitData.yHit = y;
@@ -161,5 +214,9 @@ export default class Camera {
 
     return hitData;
 
+  }
+
+  checkIfDoor(tile){
+    return typeof tile === 'object' && tile.type() == 'door';
   }
 }

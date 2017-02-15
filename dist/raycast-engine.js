@@ -77,6 +77,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -234,21 +236,72 @@ var Camera = function () {
           var mapY = vertical ? Math.floor(y + (up ? -1 : 0)) : Math.floor(y);
           var mapCheck = this.map.data[mapY][mapX];
 
-          // Check if grid is a door
-          if (this.map.doors.indexOf(mapCheck) > -1) {
-            var testX = x + xOffset / 4;
-            var testY = y + yOffset / 4;
-            xDistance = testX - this.parent.x;
-            yDistance = testY - this.parent.y;
-            hitData.xHit = testX;
-            hitData.yHit = testY;
-            hitData.texture.type = mapCheck;
-            hitData.side = vertical ? 1 : 0;
-            hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
-            hitData.distance = xDistance * xDistance + yDistance * yDistance;
-            break;
+          // Check if tile is a door
+          if (this.checkIfDoor(mapCheck) && !mapCheck.opened) {
+            var testX = x + xOffset / 2;
+            var testY = y + yOffset / 2;
+            var testMapX = Math.floor(testX);
+            var testMapY = Math.floor(testY);
+
+            if (testMapX > 0 && testMapX < this.map.width && testMapY > 0 && testMapY < this.map.height) {
+              if (this.checkIfDoor(this.map.data[testMapY][testMapX])) {
+                xDistance = testX - this.parent.x;
+                yDistance = testY - this.parent.y;
+                hitData.xHit = testX;
+                hitData.yHit = testY;
+                hitData.texture.type = mapCheck.tile;
+                hitData.side = vertical ? 1 : 0;
+                hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
+                hitData.distance = xDistance * xDistance + yDistance * yDistance;
+                break;
+              }
+            }
           }
 
+          // Check if neighbouring tiles are doors
+          if (vertical && mapCheck > 0) {
+            var prevMapCheck = this.map.data[mapY][mapX];
+            var afterMapCheck = this.map.data[mapY][mapX];
+
+            if (mapY - 1 > 0 && mapY + 1 < this.map.height) {
+              prevMapCheck = this.map.data[mapY + (up ? 1 : -1)][mapX];
+              afterMapCheck = this.map.data[mapY + (up ? -1 : 1)][mapX];
+            }
+
+            if (this.checkIfDoor(prevMapCheck) || this.checkIfDoor(afterMapCheck)) {
+              hitData.xHit = x;
+              hitData.yHit = y;
+              hitData.texture.type = 0;
+              hitData.side = vertical ? 1 : 0;
+              hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
+              hitData.distance = distanceCheck;
+
+              break;
+            }
+          }
+          // Check if neighbouring tiles are doors
+          else if (!vertical && mapCheck > 0) {
+              var _prevMapCheck = this.map.data[mapY][mapX];
+              var _afterMapCheck = this.map.data[mapY][mapX];
+
+              if (mapX - 1 > 0 && mapX + 1 < this.map.width) {
+                _prevMapCheck = this.map.data[mapY][mapX + (right ? -1 : 1)];
+                _afterMapCheck = this.map.data[mapY][mapX + (right ? -1 : 1)];
+              }
+
+              if (this.checkIfDoor(_prevMapCheck) || this.checkIfDoor(_afterMapCheck)) {
+                hitData.xHit = x;
+                hitData.yHit = y;
+                hitData.texture.type = 0;
+                hitData.side = vertical ? 1 : 0;
+                hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
+                hitData.distance = distanceCheck;
+
+                break;
+              }
+            }
+
+          // Check if tile is a wall
           if (mapCheck > 0) {
             hitData.xHit = x;
             hitData.yHit = y;
@@ -265,6 +318,11 @@ var Camera = function () {
       }
 
       return hitData;
+    }
+  }, {
+    key: 'checkIfDoor',
+    value: function checkIfDoor(tile) {
+      return (typeof tile === 'undefined' ? 'undefined' : _typeof(tile)) === 'object' && tile.type() == 'door';
     }
   }]);
 
@@ -283,9 +341,9 @@ exports.default = Camera;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-var map1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 3, 0, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 2], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 6, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 4, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 3, 3, 4, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]];
+var map1 = exports.map1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 3, 0, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 2], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 6, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 4, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 3, 3, 4, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]];
 
-exports.default = map1;
+var map1_doors = exports.map1_doors = [6];
 
 /***/ }),
 /* 2 */
@@ -311,6 +369,8 @@ exports.default = map1;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -342,7 +402,7 @@ var Player = function () {
   }
 
   _createClass(Player, [{
-    key: "update",
+    key: 'update',
     value: function update() {
       this.rotation += this.direction * this.rotationSpeed * window.deltaTime;
       if (this.rotation > 360) {
@@ -365,12 +425,17 @@ var Player = function () {
       }
     }
   }, {
-    key: "hitTest",
+    key: 'hitTest',
     value: function hitTest(x, y) {
-      return this.map.data[Math.floor(y)][Math.floor(x)] > 0;
+      var mapCheck = this.map.data[Math.floor(y)][Math.floor(x)];
+      if ((typeof mapCheck === 'undefined' ? 'undefined' : _typeof(mapCheck)) === 'object' && mapCheck.type() == 'door') {
+        return !mapCheck.opened;
+      } else {
+        return this.map.data[Math.floor(y)][Math.floor(x)] > 0;
+      }
     }
   }, {
-    key: "bindKeys",
+    key: 'bindKeys',
     value: function bindKeys() {
       var _this = this;
 
@@ -545,11 +610,13 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _map = __webpack_require__(1);
 
-var _map2 = _interopRequireDefault(_map);
+var _map2 = __webpack_require__(2);
 
-var _map3 = __webpack_require__(2);
+var _map3 = _interopRequireDefault(_map2);
 
-var _map4 = _interopRequireDefault(_map3);
+var _mapBuilder = __webpack_require__(6);
+
+var _mapBuilder2 = _interopRequireDefault(_mapBuilder);
 
 var _player = __webpack_require__(3);
 
@@ -577,18 +644,13 @@ var RaycastEngine = function () {
     this.context = this.canvas.getContext('2d');
     this.width = this.canvas.width;
     this.height = this.canvas.height;
-    this.map = {
-      data: _map2.default,
-      doors: [6],
-      width: _map2.default[0].length,
-      height: _map2.default.length
-    };
+    this.map = (0, _mapBuilder2.default)(_map.map1, _map.map1_doors);
     this.textures = new _textures2.default();
     this.player = new _player2.default({
       map: this.map,
-      x: 8,
-      y: 14,
-      rotation: 90
+      x: 10,
+      y: 10,
+      rotation: 0
     });
     this.debugMode = debugMode;
     this.raycastCanvas = null;
@@ -603,7 +665,7 @@ var RaycastEngine = function () {
     window.deltaTime = 0;
     window.lastUpdate = Date.now();
 
-    this.textures.preloadTextures(_map2.default).then(function () {
+    this.textures.preloadTextures(_map.map1).then(function () {
       return _this.gameLoop();
     });
   }
@@ -666,6 +728,88 @@ var RaycastEngine = function () {
 }();
 
 window.RaycastEngine = RaycastEngine;
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _door = __webpack_require__(7);
+
+var _door2 = _interopRequireDefault(_door);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var mapBuilder = function mapBuilder(mapData, doors) {
+    var map = mapData.map(function (rows) {
+        return rows.map(function (tile) {
+            if (doors.indexOf(tile) > -1) {
+                return new _door2.default({ tile: tile });
+            } else {
+                return tile;
+            }
+        });
+    });
+
+    return {
+        data: map,
+        width: map[0].length,
+        height: map.length
+    };
+};
+
+exports.default = mapBuilder;
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Door = function () {
+    function Door() {
+        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            _ref$tile = _ref.tile,
+            tile = _ref$tile === undefined ? 0 : _ref$tile,
+            _ref$opened = _ref.opened,
+            opened = _ref$opened === undefined ? false : _ref$opened,
+            _ref$key = _ref.key,
+            key = _ref$key === undefined ? null : _ref$key;
+
+        _classCallCheck(this, Door);
+
+        this.tile = tile;
+        this.opened = opened;
+        this.key = key;
+        this.unlocked = key ? false : true;
+    }
+
+    _createClass(Door, [{
+        key: 'type',
+        value: function type() {
+            return 'door';
+        }
+    }]);
+
+    return Door;
+}();
+
+exports.default = Door;
 
 /***/ })
 /******/ ]);

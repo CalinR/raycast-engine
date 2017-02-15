@@ -35,7 +35,13 @@ export default class Player {
   }
 
   hitTest(x, y){
+    let mapCheck = this.map.data[Math.floor(y)][Math.floor(x)];
+    if(typeof mapCheck === 'object' && mapCheck.type() == 'door'){
+      return !mapCheck.opened;
+    }
+    else {
       return this.map.data[Math.floor(y)][Math.floor(x)] > 0;
+    }
   }
 
   bindKeys(){
