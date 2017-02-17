@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 5);
+/******/ 	return __webpack_require__(__webpack_require__.s = 6);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -82,6 +82,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+window.test = 0;
 
 var Camera = function () {
   function Camera() {
@@ -114,6 +116,8 @@ var Camera = function () {
       this.raycastCanvas = raycastCanvas;
       this.raycastContext = this.raycastCanvas.getContext('2d');
     }
+    this.parent.camera = this;
+    this.doors = [];
   }
 
   _createClass(Camera, [{
@@ -131,6 +135,7 @@ var Camera = function () {
       this.drawBackground();
       var columnsToDraw = [];
       var maxWallHeight = this.canvas.height;
+      this.doors = [];
       for (var column = 0; column < columns; column++) {
         var x = -columns / 2 + column;
         var angle = Math.atan2(x, this.focalLength);
@@ -142,6 +147,34 @@ var Camera = function () {
         var columnX = column * this.columnWidth;
         var columnY = this.canvas.height / 2 - height / 2;
         this.textures.getTexture(texture.type, texture.offset, this.columnWidth, hitData.side, this.context, columnX, columnY, height);
+      }
+
+      // Update door if it is in line of site
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = this.doors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var door = _step.value;
+
+          if (door) {
+            door.update();
+          }
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
       }
     }
   }, {
@@ -179,14 +212,16 @@ var Camera = function () {
         return {
           distance: hitData.distance,
           texture: hitData.texture,
-          side: hitData.side
+          side: hitData.side,
+          tile: hitData.tile
         };
       }
 
       return {
         distance: 10000,
         texture: hitData.texture,
-        side: hitData.side
+        side: hitData.side,
+        tile: hitData.tile
       };
     }
   }, {
@@ -237,6 +272,10 @@ var Camera = function () {
           var mapCheck = this.map.data[mapY][mapX];
 
           // Check if tile is a door
+          if (this.checkIfDoor(mapCheck)) {
+            this.doors[mapCheck.id] = mapCheck;
+          }
+
           if (this.checkIfDoor(mapCheck) && !mapCheck.opened) {
             var testX = x + xOffset / 2;
             var testY = y + yOffset / 2;
@@ -244,16 +283,22 @@ var Camera = function () {
             var testMapY = Math.floor(testY);
 
             if (testMapX > 0 && testMapX < this.map.width && testMapY > 0 && testMapY < this.map.height) {
-              if (this.checkIfDoor(this.map.data[testMapY][testMapX])) {
-                xDistance = testX - this.parent.x;
-                yDistance = testY - this.parent.y;
-                hitData.xHit = testX;
-                hitData.yHit = testY;
-                hitData.texture.type = mapCheck.tile;
-                hitData.side = vertical ? 1 : 0;
-                hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
-                hitData.distance = xDistance * xDistance + yDistance * yDistance;
-                break;
+              var testMapCheck = this.map.data[testMapY][testMapX];
+              if (this.checkIfDoor(testMapCheck)) {
+                var doorOffset = vertical ? testX % 1 : testY % 1;
+                var textureOffset = testMapCheck.doorOpenValue;
+                if (doorOffset > testMapCheck.doorOpenValue) {
+                  xDistance = testX - this.parent.x;
+                  yDistance = testY - this.parent.y;
+                  hitData.xHit = testX;
+                  hitData.yHit = testY;
+                  hitData.texture.type = mapCheck.tile;
+                  hitData.tile = this.map.data[testMapY][testMapX];
+                  hitData.side = vertical ? 1 : 0;
+                  hitData.texture.offset = vertical ? hitData.xHit - mapX - textureOffset : hitData.yHit - mapY - textureOffset;
+                  hitData.distance = xDistance * xDistance + yDistance * yDistance;
+                  break;
+                }
               }
             }
           }
@@ -296,7 +341,6 @@ var Camera = function () {
                 hitData.side = vertical ? 1 : 0;
                 hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
                 hitData.distance = distanceCheck;
-
                 break;
               }
             }
@@ -339,11 +383,34 @@ exports.default = Camera;
 
 
 Object.defineProperty(exports, "__esModule", {
-  value: true
+    value: true
 });
-var map1 = exports.map1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 3, 0, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 2], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 6, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 4, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 3, 3, 4, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]];
 
-var map1_doors = exports.map1_doors = [6];
+var _door = __webpack_require__(5);
+
+var _door2 = _interopRequireDefault(_door);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var mapBuilder = function mapBuilder(mapData, doors) {
+    var map = mapData.map(function (rows) {
+        return rows.map(function (tile) {
+            if (doors.indexOf(tile) > -1) {
+                return new _door2.default({ tile: tile });
+            } else {
+                return tile;
+            }
+        });
+    });
+
+    return {
+        data: map,
+        width: map[0].length,
+        height: map.length
+    };
+};
+
+exports.default = mapBuilder;
 
 /***/ }),
 /* 2 */
@@ -355,9 +422,9 @@ var map1_doors = exports.map1_doors = [6];
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-var map1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]];
+var map1 = exports.map1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 3, 0, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 2], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 6, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 4, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 3, 3, 4, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]];
 
-exports.default = map1;
+var map1_doors = exports.map1_doors = [6];
 
 /***/ }),
 /* 3 */
@@ -386,7 +453,9 @@ var Player = function () {
         _ref$y = _ref.y,
         y = _ref$y === undefined ? 0 : _ref$y,
         _ref$rotation = _ref.rotation,
-        rotation = _ref$rotation === undefined ? 0 : _ref$rotation;
+        rotation = _ref$rotation === undefined ? 0 : _ref$rotation,
+        _ref$raycastCanvas = _ref.raycastCanvas,
+        raycastCanvas = _ref$raycastCanvas === undefined ? null : _ref$raycastCanvas;
 
     _classCallCheck(this, Player);
 
@@ -399,6 +468,12 @@ var Player = function () {
     this.rotationSpeed = 180; // Half rotation per second
     this.rotation = rotation;
     this.bindKeys();
+    this.hitTile = null;
+    if (raycastCanvas) {
+      this.raycastCanvas = raycastCanvas;
+      this.raycastContext = this.raycastCanvas.getContext('2d');
+    }
+    this.camera = null;
   }
 
   _createClass(Player, [{
@@ -423,11 +498,14 @@ var Player = function () {
         this.x = newX;
         this.y = newY;
       }
+
+      this.checkForDoor();
     }
   }, {
     key: 'hitTest',
     value: function hitTest(x, y) {
       var mapCheck = this.map.data[Math.floor(y)][Math.floor(x)];
+      this.hitTile = mapCheck;
       if ((typeof mapCheck === 'undefined' ? 'undefined' : _typeof(mapCheck)) === 'object' && mapCheck.type() == 'door') {
         return !mapCheck.opened;
       } else {
@@ -474,8 +552,102 @@ var Player = function () {
           case 39:
             _this.direction = 0;
             break;
+          case 32:
+            _this.openDoor();
+            break;
         }
       };
+    }
+  }, {
+    key: 'checkForDoor',
+    value: function checkForDoor() {
+      // Checks if player is standing in a door
+      var mapX = Math.floor(this.x);
+      var mapY = Math.floor(this.y);
+      var mapCheck = this.map.data[mapY][mapX];
+      if ((typeof mapCheck === 'undefined' ? 'undefined' : _typeof(mapCheck)) === 'object' && mapCheck.type() == 'door') {
+        mapCheck.resetTimer();
+      }
+    }
+  }, {
+    key: 'openDoor',
+    value: function openDoor() {
+      var angle = this.rotation * Math.PI / 180;
+      var distance = 1;
+      var hitTile = this.camera.traverseGrid(angle, false);
+      if (hitTile.tile && hitTile.distance <= distance) {
+        hitTile.tile.openDoor();
+      }
+      hitTile = this.camera.traverseGrid(angle, true);
+      if (hitTile.tile && hitTile.distance <= distance) {
+        hitTile.tile.openDoor();
+      }
+    }
+  }, {
+    key: 'castRay',
+    value: function castRay(angle, rayDistance) {
+      var twoPI = Math.PI * 2;
+      angle %= twoPI;
+      if (angle < 0) angle += twoPI;
+
+      var right = angle > twoPI * 0.75 || angle < twoPI * 0.25;
+      var up = angle < 0 || angle > Math.PI;
+      var distance = null;
+
+      var x = right ? Math.ceil(this.x) : Math.floor(this.x - 1);
+      var y = Math.floor(this.y);
+      var mapCheck = this.map.data[y] ? this.map.data[y][x] : 0;
+
+      if (mapCheck && (typeof mapCheck === 'undefined' ? 'undefined' : _typeof(mapCheck)) === 'object' && mapCheck.type() == 'door') {
+        distance = x - this.x;
+      }
+
+      x = Math.floor(this.x);
+      y = up ? Math.floor(this.y - 1) : Math.ceil(this.y);
+      mapCheck = this.map.data[y] ? this.map.data[y][x] : 0;
+      if (mapCheck && (typeof mapCheck === 'undefined' ? 'undefined' : _typeof(mapCheck)) === 'object' && mapCheck.type() == 'door') {
+        var distanceCheck = y - this.y;
+        if (distanceCheck < distance) {
+          distance = distanceCheck;
+        }
+      }
+
+      console.log(distance);
+
+      // let xOffset = right ? 1 : -1;
+      // let yOffset = xOffset * slope;
+      // let distance = null;
+
+      // let xDistance = x - this.x;
+      // let yDistance = y - this.y;
+      // let mapX = Math.floor(x + (right ? 0 : -1));
+      // let mapY = Math.floor(y);
+      // let mapCheck = this.map.data[mapY] ? this.map.data[mapY][mapX] : null;
+      // console.log(angle, xOffset);
+
+      // if(typeof mapCheck === 'object' && mapCheck.type() == 'door'){
+      //   distance = xDistance * xDistance + yDistance * yDistance;
+      // }
+
+      // slope = cos / sin;
+      // y = up ? Math.floor(this.y) : Math.ceil(this.y);
+      // x = this.x + (y - this.y) * slope;
+      // yOffset = up ? -1 : 1;
+      // xOffset = yOffset * slope;
+      // xDistance = x - this.x;
+      // yDistance = y - this.y;
+      // mapY = Math.floor(y + (up ? -1 : 0));
+      // mapX = Math.floor(x);
+      // mapCheck = this.map.data[mapY] ? this.map.data[mapY][mapX] : null;
+      // let distanceCheck = xDistance * xDistance + yDistance * yDistance;
+
+      // if(typeof mapCheck === 'object' && mapCheck.type() == 'door' && (!distance || distanceCheck > distance)){
+      //   distance = distanceCheck;
+      // }
+
+      // if(distance){
+      //   console.log(distance, 'door hit');
+      // }
     }
   }]);
 
@@ -606,15 +778,112 @@ exports.default = Textures;
 "use strict";
 
 
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _map = __webpack_require__(1);
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var _map2 = __webpack_require__(2);
+var doorId = 0;
 
-var _map3 = _interopRequireDefault(_map2);
+var Door = function () {
+    function Door() {
+        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+            _ref$tile = _ref.tile,
+            tile = _ref$tile === undefined ? 0 : _ref$tile,
+            _ref$opened = _ref.opened,
+            opened = _ref$opened === undefined ? false : _ref$opened,
+            _ref$key = _ref.key,
+            key = _ref$key === undefined ? null : _ref$key,
+            _ref$doorTimer = _ref.doorTimer,
+            doorTimer = _ref$doorTimer === undefined ? 5000 : _ref$doorTimer;
 
-var _mapBuilder = __webpack_require__(6);
+        _classCallCheck(this, Door);
+
+        this.tile = tile;
+        this.id = doorId++;
+        this.opened = opened;
+        this.opening = false;
+        this.closing = false;
+        this.key = key;
+        this.unlocked = key ? false : true;
+        this.doorTimer = doorTimer;
+        this.currentTimer = null;
+        this.doorOpenSpeed = 1;
+        this.doorOpenValue = 0;
+        this.openTime = null;
+    }
+
+    _createClass(Door, [{
+        key: 'update',
+        value: function update() {
+            if (this.openTime && Date.now() > this.openTime + this.doorTimer + this.doorOpenSpeed * 1000 * 2) {
+                this.opening = false;
+                this.closing = false;
+                this.closeDoor();
+            } else if (this.openTime && Date.now() > this.openTime + this.doorTimer) {
+                this.opening = false;
+                this.closing = true;
+                this.opened = false;
+            }
+            if (this.opening) {
+                this.doorOpenValue += this.doorOpenSpeed * window.deltaTime;
+                if (this.doorOpenValue > 1) {
+                    this.opened = true;
+                    this.opening = false;
+                    this.doorOpenValue = 1;
+                    // this.startDoorTimer();
+                }
+            }
+            if (this.closing) {
+                this.doorOpenValue -= this.doorOpenSpeed * window.deltaTime;
+                if (this.doorOpenValue < 0) {
+                    this.closeDoor();
+                }
+            }
+        }
+    }, {
+        key: 'closeDoor',
+        value: function closeDoor() {
+            this.opened = false;
+            this.closing = false;
+            this.doorOpenValue = 0;
+            this.openTime = null;
+        }
+    }, {
+        key: 'openDoor',
+        value: function openDoor() {
+            if (this.unlocked) {
+                this.opening = true;
+                this.openTime = Date.now();
+            }
+        }
+    }, {
+        key: 'type',
+        value: function type() {
+            return 'door';
+        }
+    }]);
+
+    return Door;
+}();
+
+exports.default = Door;
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _map = __webpack_require__(2);
+
+var _mapBuilder = __webpack_require__(1);
 
 var _mapBuilder2 = _interopRequireDefault(_mapBuilder);
 
@@ -635,181 +904,105 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var RaycastEngine = function () {
-  function RaycastEngine(elementId, debugMode) {
-    var _this = this;
+	function RaycastEngine(elementId, debugMode) {
+		var _this = this;
 
-    _classCallCheck(this, RaycastEngine);
+		_classCallCheck(this, RaycastEngine);
 
-    this.canvas = document.getElementById(elementId);
-    this.context = this.canvas.getContext('2d');
-    this.width = this.canvas.width;
-    this.height = this.canvas.height;
-    this.map = (0, _mapBuilder2.default)(_map.map1, _map.map1_doors);
-    this.textures = new _textures2.default();
-    this.player = new _player2.default({
-      map: this.map,
-      x: 10,
-      y: 10,
-      rotation: 0
-    });
-    this.debugMode = debugMode;
-    this.raycastCanvas = null;
+		this.canvas = document.getElementById(elementId);
+		this.context = this.canvas.getContext('2d');
+		this.width = this.canvas.width;
+		this.height = this.canvas.height;
+		this.map = (0, _mapBuilder2.default)(_map.map1, _map.map1_doors);
+		this.textures = new _textures2.default();
+		this.debugMode = debugMode;
+		this.raycastCanvas = null;
 
-    if (this.debugMode) {
-      this.raycastCanvas = document.createElement('canvas');
-      this.raycastContext = this.raycastCanvas.getContext('2d');
-      document.body.appendChild(this.raycastCanvas);
-    }
+		if (this.debugMode) {
+			this.raycastCanvas = document.createElement('canvas');
+			this.raycastContext = this.raycastCanvas.getContext('2d');
+			document.body.appendChild(this.raycastCanvas);
+		}
+		this.player = new _player2.default({
+			map: this.map,
+			x: 10,
+			y: 10,
+			rotation: 0,
+			raycastCanvas: this.raycastCanvas
+		});
+		this.camera = new _camera2.default({
+			parent: this.player,
+			canvas: this.canvas,
+			map: this.map,
+			raycastCanvas: this.raycastCanvas,
+			textures: this.textures
+		});
+		window.deltaTime = 0;
+		window.lastUpdate = Date.now();
 
-    this.camera = new _camera2.default({ parent: this.player, canvas: this.canvas, map: this.map, raycastCanvas: this.raycastCanvas, textures: this.textures });
-    window.deltaTime = 0;
-    window.lastUpdate = Date.now();
+		this.textures.preloadTextures(_map.map1).then(function () {
+			return _this.gameLoop();
+		});
+	}
 
-    this.textures.preloadTextures(_map.map1).then(function () {
-      return _this.gameLoop();
-    });
-  }
+	_createClass(RaycastEngine, [{
+		key: 'update',
+		value: function update() {
+			this.player.update();
+			if (this.debugMode) {
+				this.drawRaycastCanvas();
+			}
+			this.camera.update();
+		}
+	}, {
+		key: 'drawRaycastCanvas',
+		value: function drawRaycastCanvas() {
+			var scale = 8;
+			this.raycastCanvas.width = this.map.width * scale;
+			this.raycastCanvas.height = this.map.height * scale;
+			this.raycastContext.clearRect(0, 0, this.map.width * scale, this.map.height * scale);
 
-  _createClass(RaycastEngine, [{
-    key: 'update',
-    value: function update() {
-      this.player.update();
-      if (this.debugMode) {
-        this.drawRaycastCanvas();
-      }
-      this.camera.update();
-    }
-  }, {
-    key: 'drawRaycastCanvas',
-    value: function drawRaycastCanvas() {
-      var scale = 8;
-      this.raycastCanvas.width = this.map.width * scale;
-      this.raycastCanvas.height = this.map.height * scale;
-      this.raycastContext.clearRect(0, 0, this.map.width * scale, this.map.height * scale);
+			for (var y in this.map.data) {
+				for (var x in this.map.data[y]) {
+					if (this.map.data[y][x] > 0) {
+						this.raycastContext.fillStyle = '#ccc';
+						this.raycastContext.fillRect(x * scale, y * scale, scale, scale);
+					} else {
+						this.raycastContext.strokeStyle = '#ccc';
+						this.raycastContext.strokeRect(x * scale, y * scale, scale, scale);
+					}
+				}
+			}
 
-      for (var y in this.map.data) {
-        for (var x in this.map.data[y]) {
-          if (this.map.data[y][x] > 0) {
-            this.raycastContext.fillStyle = '#ccc';
-            this.raycastContext.fillRect(x * scale, y * scale, scale, scale);
-          } else {
-            this.raycastContext.strokeStyle = '#ccc';
-            this.raycastContext.strokeRect(x * scale, y * scale, scale, scale);
-          }
-        }
-      }
+			var radians = this.player.rotation * Math.PI / 180;
 
-      var radians = this.player.rotation * Math.PI / 180;
+			this.raycastContext.save();
+			this.raycastContext.translate(this.player.x * scale, this.player.y * scale);
+			this.raycastContext.rotate(radians);
+			this.raycastContext.fillStyle = '#000';
+			this.raycastContext.fillRect(-scale / 4, -scale / 4, scale / 2, scale / 2);
+			this.raycastContext.restore();
+		}
+	}, {
+		key: 'gameLoop',
+		value: function gameLoop() {
+			var _this2 = this;
 
-      this.raycastContext.save();
-      this.raycastContext.translate(this.player.x * scale, this.player.y * scale);
-      this.raycastContext.rotate(radians);
-      this.raycastContext.fillStyle = '#000';
-      this.raycastContext.fillRect(-scale / 4, -scale / 4, scale / 2, scale / 2);
-      this.raycastContext.restore();
-    }
-  }, {
-    key: 'gameLoop',
-    value: function gameLoop() {
-      var _this2 = this;
+			var currentFrameTime = Date.now();
+			window.deltaTime = (currentFrameTime - window.lastUpdate) / 1000.0; // Convert delta time from milliseconds to seconds
+			window.lastUpdate = currentFrameTime;
+			this.update();
 
-      var currentFrameTime = Date.now();
-      window.deltaTime = (currentFrameTime - window.lastUpdate) / 1000.0; // Convert delta time from milliseconds to seconds
-      window.lastUpdate = currentFrameTime;
-      this.update();
+			window.requestAnimationFrame(function () {
+				return _this2.gameLoop();
+			});
+		}
+	}]);
 
-      window.requestAnimationFrame(function () {
-        return _this2.gameLoop();
-      });
-    }
-  }]);
-
-  return RaycastEngine;
+	return RaycastEngine;
 }();
 
 window.RaycastEngine = RaycastEngine;
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _door = __webpack_require__(7);
-
-var _door2 = _interopRequireDefault(_door);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var mapBuilder = function mapBuilder(mapData, doors) {
-    var map = mapData.map(function (rows) {
-        return rows.map(function (tile) {
-            if (doors.indexOf(tile) > -1) {
-                return new _door2.default({ tile: tile });
-            } else {
-                return tile;
-            }
-        });
-    });
-
-    return {
-        data: map,
-        width: map[0].length,
-        height: map.length
-    };
-};
-
-exports.default = mapBuilder;
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Door = function () {
-    function Door() {
-        var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-            _ref$tile = _ref.tile,
-            tile = _ref$tile === undefined ? 0 : _ref$tile,
-            _ref$opened = _ref.opened,
-            opened = _ref$opened === undefined ? false : _ref$opened,
-            _ref$key = _ref.key,
-            key = _ref$key === undefined ? null : _ref$key;
-
-        _classCallCheck(this, Door);
-
-        this.tile = tile;
-        this.opened = opened;
-        this.key = key;
-        this.unlocked = key ? false : true;
-    }
-
-    _createClass(Door, [{
-        key: 'type',
-        value: function type() {
-            return 'door';
-        }
-    }]);
-
-    return Door;
-}();
-
-exports.default = Door;
 
 /***/ })
 /******/ ]);

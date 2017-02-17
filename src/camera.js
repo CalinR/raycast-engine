@@ -1,3 +1,4 @@
+window.test = 0;
 export default class Camera {
   constructor({ parent, canvas, map, raycastCanvas, textures, ceilingColor = '#383838', floorColor = '#707070' } = {}){
     this.parent = parent;
@@ -16,6 +17,8 @@ export default class Camera {
       this.raycastCanvas = raycastCanvas;
       this.raycastContext = this.raycastCanvas.getContext('2d');
     }
+    this.parent.camera = this;
+    this.doors = [];
   }
 
   update(){
@@ -30,6 +33,7 @@ export default class Camera {
     this.drawBackground();
     let columnsToDraw = [];
     let maxWallHeight = this.canvas.height;
+    this.doors = [];
     for(let column = 0; column < columns; column++){
       let x = (-columns / 2 + column);
       let angle = Math.atan2(x, this.focalLength);
@@ -41,6 +45,13 @@ export default class Camera {
       let columnX = column * this.columnWidth;
       let columnY = (this.canvas.height / 2) - (height / 2);
       this.textures.getTexture(texture.type, texture.offset, this.columnWidth, hitData.side, this.context, columnX, columnY, height);
+    }
+
+    // Update door if it is in line of site
+    for(let door of this.doors){
+      if(door){
+        door.update();
+      }
     }
   }
 
@@ -76,14 +87,16 @@ export default class Camera {
       return {
         distance: hitData.distance,
         texture: hitData.texture,
-        side: hitData.side
+        side: hitData.side,
+        tile: hitData.tile
       };
     }
 
     return {
       distance: 10000,
       texture: hitData.texture,
-      side: hitData.side
+      side: hitData.side,
+      tile: hitData.tile
     };
   }
 
@@ -131,6 +144,10 @@ export default class Camera {
 
 
         // Check if tile is a door
+        if(this.checkIfDoor(mapCheck)){
+          this.doors[mapCheck.id] = mapCheck;
+        }
+
         if(this.checkIfDoor(mapCheck) && !mapCheck.opened){
           let testX = x + (xOffset / 2);
           let testY = y + (yOffset / 2);
@@ -138,16 +155,22 @@ export default class Camera {
           let testMapY = Math.floor(testY);
 
           if(testMapX > 0 && testMapX < this.map.width && testMapY > 0 && testMapY < this.map.height){
-            if(this.checkIfDoor(this.map.data[testMapY][testMapX])){
-              xDistance = testX - this.parent.x;
-              yDistance = testY - this.parent.y;
-              hitData.xHit = testX;
-              hitData.yHit = testY;
-              hitData.texture.type = mapCheck.tile;
-              hitData.side = vertical ? 1 : 0;
-              hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
-              hitData.distance = xDistance * xDistance + yDistance * yDistance;
-              break;
+            let testMapCheck = this.map.data[testMapY][testMapX]
+            if(this.checkIfDoor(testMapCheck)){
+              let doorOffset = vertical ? testX % 1 : testY % 1;
+              let textureOffset = testMapCheck.doorOpenValue;
+              if(doorOffset > testMapCheck.doorOpenValue){
+                xDistance = testX - this.parent.x;
+                yDistance = testY - this.parent.y;
+                hitData.xHit = testX;
+                hitData.yHit = testY;
+                hitData.texture.type = mapCheck.tile;
+                hitData.tile = this.map.data[testMapY][testMapX];
+                hitData.side = vertical ? 1 : 0;
+                hitData.texture.offset = vertical ? hitData.xHit - mapX - textureOffset : hitData.yHit - mapY - textureOffset;
+                hitData.distance = xDistance * xDistance + yDistance * yDistance;
+                break;
+              }
             }
           }
         }
@@ -190,7 +213,6 @@ export default class Camera {
             hitData.side = vertical ? 1 : 0;
             hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
             hitData.distance = distanceCheck;
-
             break;
           }
         }

@@ -34,6 +34,7 @@ export default class Textures {
   }
 
   preloadTextures(map){
+
     return new Promise((resolve, reject) => {
       this.tiles = this.getUniqueTiles(map);
       for(let t = 0; t<this.tiles.length; t++){
