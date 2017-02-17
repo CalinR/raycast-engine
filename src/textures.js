@@ -13,7 +13,8 @@ export default class Textures {
   constructor(){
     this.tiles = [];
     this.textures = [];
-    this.canvases = []
+    this.canvases = [];
+    this.loadedTextures = 0;
   }
 
   getUniqueTiles(map){
@@ -43,6 +44,7 @@ export default class Textures {
           let image = new Image();
           image.src = `./assets/${tile}`;
           image.onload = () => {
+            this.loadedTextures++;
             this.textures[t] = image;
             let canvas = document.createElement('canvas');
             let context = canvas.getContext('2d');
@@ -55,7 +57,7 @@ export default class Textures {
               canvas: canvas,
               context: context
             }
-            if(this.textures.length >= this.tiles.length){
+            if(this.loadedTextures+1 >= this.tiles.length){
               resolve(this.textures);
             }
           }

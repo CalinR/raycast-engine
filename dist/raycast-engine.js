@@ -689,6 +689,7 @@ var Textures = function () {
     this.tiles = [];
     this.textures = [];
     this.canvases = [];
+    this.loadedTextures = 0;
   }
 
   _createClass(Textures, [{
@@ -724,6 +725,7 @@ var Textures = function () {
               var image = new Image();
               image.src = './assets/' + tile;
               image.onload = function () {
+                _this.loadedTextures++;
                 _this.textures[t] = image;
                 var canvas = document.createElement('canvas');
                 var context = canvas.getContext('2d');
@@ -736,7 +738,7 @@ var Textures = function () {
                   canvas: canvas,
                   context: context
                 };
-                if (_this.textures.length >= _this.tiles.length) {
+                if (_this.loadedTextures + 1 >= _this.tiles.length) {
                   resolve(_this.textures);
                 }
               };
