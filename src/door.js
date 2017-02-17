@@ -58,6 +58,12 @@ export default class Door {
         }
     }
 
+    restTimer(){
+        if(this.opened){
+            this.openTime = Date.now();
+        }
+    }
+
     type(){
         return 'door';
     }
