@@ -690,21 +690,25 @@ var Textures = function () {
     this.textures = [];
     this.canvases = [];
     this.loadedTextures = 0;
+    this.texturesToLoad = 0;
   }
 
   _createClass(Textures, [{
     key: 'getUniqueTiles',
     value: function getUniqueTiles(map) {
       var tiles = [];
+      var tilesToLoad = [];
       for (var y = 0; y < map.length; y++) {
         for (var x = 0; x < map[y].length; x++) {
           var tile = map[y][x];
           if (tiles.indexOf(tile) == -1 && tile > 0) {
             tiles[tile] = tile;
+            tilesToLoad.push(tile);
           }
         }
       }
       tiles[0] = 0;
+      this.texturesToLoad = tilesToLoad;
 
       return tiles.map(function (index) {
         return textures[index];
@@ -725,7 +729,6 @@ var Textures = function () {
               var image = new Image();
               image.src = './assets/' + tile;
               image.onload = function () {
-                _this.loadedTextures++;
                 _this.textures[t] = image;
                 var canvas = document.createElement('canvas');
                 var context = canvas.getContext('2d');
@@ -738,9 +741,11 @@ var Textures = function () {
                   canvas: canvas,
                   context: context
                 };
-                if (_this.loadedTextures + 1 >= _this.tiles.length) {
+
+                if (_this.loadedTextures >= _this.texturesToLoad.length) {
                   resolve(_this.textures);
                 }
+                _this.loadedTextures++;
               };
             })();
           }

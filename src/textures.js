@@ -15,19 +15,23 @@ export default class Textures {
     this.textures = [];
     this.canvases = [];
     this.loadedTextures = 0;
+    this.texturesToLoad = 0;
   }
 
   getUniqueTiles(map){
     let tiles = [];
+    let tilesToLoad = [];
     for(let y=0; y<map.length; y++){
       for(let x=0; x<map[y].length; x++){
         let tile = map[y][x];
         if(tiles.indexOf(tile) == -1 && tile > 0){
           tiles[tile] = tile;
+          tilesToLoad.push(tile);
         }
       }
     }
     tiles[0] = 0;
+    this.texturesToLoad = tilesToLoad;
 
     return tiles.map((index) => {
       return textures[index]
@@ -44,7 +48,6 @@ export default class Textures {
           let image = new Image();
           image.src = `./assets/${tile}`;
           image.onload = () => {
-            this.loadedTextures++;
             this.textures[t] = image;
             let canvas = document.createElement('canvas');
             let context = canvas.getContext('2d');
@@ -57,9 +60,11 @@ export default class Textures {
               canvas: canvas,
               context: context
             }
-            if(this.loadedTextures+1 >= this.tiles.length){
+
+            if(this.loadedTextures >= this.texturesToLoad.length){
               resolve(this.textures);
             }
+            this.loadedTextures++;
           }
         }
       }
