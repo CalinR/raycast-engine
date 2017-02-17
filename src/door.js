@@ -58,7 +58,7 @@ export default class Door {
         }
     }
 
-    restTimer(){
+    resetTimer(){
         if(this.opened){
             this.openTime = Date.now();
         }

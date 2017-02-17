@@ -861,6 +861,13 @@ var Door = function () {
             }
         }
     }, {
+        key: 'resetTimer',
+        value: function resetTimer() {
+            if (this.opened) {
+                this.openTime = Date.now();
+            }
+        }
+    }, {
         key: 'type',
         value: function type() {
             return 'door';
