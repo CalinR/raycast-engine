@@ -1,6 +1,5 @@
-window.test = 0;
 export default class Camera {
-  constructor({ parent, canvas, map, raycastCanvas, textures, ceilingColor = '#383838', floorColor = '#707070' } = {}){
+  constructor({ parent, canvas, map, raycastCanvas, textures, ceilingColor = '#383838', floorColor = '#707070'} = {}){
     this.parent = parent;
     this.canvas = canvas;
     this.context = canvas.getContext('2d');
@@ -34,9 +33,16 @@ export default class Camera {
     let columnsToDraw = [];
     let maxWallHeight = this.canvas.height;
     this.doors = [];
+    let startAngle = Math.atan2((-columns / 2), this.focalLength);
+    let endAngle = 0;
+
     for(let column = 0; column < columns; column++){
       let x = (-columns / 2 + column);
       let angle = Math.atan2(x, this.focalLength);
+      if(column == 0){
+        startAngle = angle + radians;
+      }
+      endAngle = angle + radians;
       let radians = this.parent.rotation * Math.PI / 180;
       let hitData = this.castRay(radians + angle);
       let z = hitData.distance;
@@ -45,6 +51,10 @@ export default class Camera {
       let columnX = column * this.columnWidth;
       let columnY = (this.canvas.height / 2) - (height / 2);
       this.textures.getTexture(texture.type, texture.offset, this.columnWidth, hitData.side, this.context, columnX, columnY, height);
+    }
+
+    for(let enemy of this.map.enemies){
+      enemy.render(this.parent, this.focalLength, startAngle, endAngle);
     }
 
     // Update door if it is in line of site

@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "";
 
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 6);
+/******/ 	return __webpack_require__(__webpack_require__.s = 7);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -82,8 +82,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-window.test = 0;
 
 var Camera = function () {
   function Camera() {
@@ -136,11 +134,18 @@ var Camera = function () {
       var columnsToDraw = [];
       var maxWallHeight = this.canvas.height;
       this.doors = [];
+      var startAngle = Math.atan2(-columns / 2, this.focalLength);
+      var endAngle = 0;
+
       for (var column = 0; column < columns; column++) {
         var x = -columns / 2 + column;
         var angle = Math.atan2(x, this.focalLength);
-        var radians = this.parent.rotation * Math.PI / 180;
-        var hitData = this.castRay(radians + angle);
+        if (column == 0) {
+          startAngle = angle + _radians;
+        }
+        endAngle = angle + _radians;
+        var _radians = this.parent.rotation * Math.PI / 180;
+        var hitData = this.castRay(_radians + angle);
         var z = hitData.distance;
         var texture = hitData.texture;
         var height = this.canvas.height / z;
@@ -149,19 +154,18 @@ var Camera = function () {
         this.textures.getTexture(texture.type, texture.offset, this.columnWidth, hitData.side, this.context, columnX, columnY, height);
       }
 
-      // Update door if it is in line of site
       var _iteratorNormalCompletion = true;
       var _didIteratorError = false;
       var _iteratorError = undefined;
 
       try {
-        for (var _iterator = this.doors[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
-          var door = _step.value;
+        for (var _iterator = this.map.enemies[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var enemy = _step.value;
 
-          if (door) {
-            door.update();
-          }
+          enemy.render(this.parent, this.focalLength, startAngle, endAngle);
         }
+
+        // Update door if it is in line of site
       } catch (err) {
         _didIteratorError = true;
         _iteratorError = err;
@@ -173,6 +177,33 @@ var Camera = function () {
         } finally {
           if (_didIteratorError) {
             throw _iteratorError;
+          }
+        }
+      }
+
+      var _iteratorNormalCompletion2 = true;
+      var _didIteratorError2 = false;
+      var _iteratorError2 = undefined;
+
+      try {
+        for (var _iterator2 = this.doors[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+          var door = _step2.value;
+
+          if (door) {
+            door.update();
+          }
+        }
+      } catch (err) {
+        _didIteratorError2 = true;
+        _iteratorError2 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion2 && _iterator2.return) {
+            _iterator2.return();
+          }
+        } finally {
+          if (_didIteratorError2) {
+            throw _iteratorError2;
           }
         }
       }
@@ -392,7 +423,7 @@ var _door2 = _interopRequireDefault(_door);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var mapBuilder = function mapBuilder(mapData, doors) {
+var mapBuilder = function mapBuilder(mapData, doors, enemyData, canvas) {
     var map = mapData.map(function (rows) {
         return rows.map(function (tile) {
             if (doors.indexOf(tile) > -1) {
@@ -403,8 +434,17 @@ var mapBuilder = function mapBuilder(mapData, doors) {
         });
     });
 
+    var context = canvas.getContext('2d');
+
+    var enemies = enemyData.map(function (enemy) {
+        enemy.canvas = canvas;
+        enemy.context = context;
+        return enemy;
+    });
+
     return {
         data: map,
+        enemies: enemies,
         width: map[0].length,
         height: map.length
     };
@@ -422,7 +462,17 @@ exports.default = mapBuilder;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.map1_doors = exports.enemies = exports.map1 = undefined;
+
+var _enemy = __webpack_require__(6);
+
+var _enemy2 = _interopRequireDefault(_enemy);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 var map1 = exports.map1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 3, 0, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 2], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 6, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 4, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 3, 3, 4, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]];
+
+var enemies = exports.enemies = [new _enemy2.default({ x: 15, y: 4 })];
 
 var map1_doors = exports.map1_doors = [6];
 
@@ -893,6 +943,70 @@ exports.default = Door;
 "use strict";
 
 
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Enemy = function () {
+    function Enemy(_ref) {
+        var _ref$x = _ref.x,
+            x = _ref$x === undefined ? 0 : _ref$x,
+            _ref$y = _ref.y,
+            y = _ref$y === undefined ? 0 : _ref$y,
+            _ref$image = _ref.image,
+            image = _ref$image === undefined ? null : _ref$image,
+            _ref$canvas = _ref.canvas,
+            canvas = _ref$canvas === undefined ? null : _ref$canvas,
+            _ref$context = _ref.context,
+            context = _ref$context === undefined ? null : _ref$context;
+
+        _classCallCheck(this, Enemy);
+
+        this.x = x;
+        this.y = y;
+        this.image = image;
+        this.canvas = canvas;
+        this.context = context;
+    }
+
+    _createClass(Enemy, [{
+        key: 'render',
+        value: function render(camera, focalLength, start, end) {
+            var dx = this.x - camera.x;
+            var dy = this.y - camera.y;
+            var angle = Math.atan2(dy, dx) - camera.rotation * (Math.PI / 180);
+
+            if (angle < -Math.PI) angle += 2 * Math.PI;
+            if (angle >= Math.PI) angle -= 2 * Math.PI;
+            if (angle > -Math.PI * 0.5 && angle < Math.PI * 0.5) {
+                var distance = Math.sqrt(dx * dx + dy * dy);
+                var size = this.canvas.height / (Math.cos(angle) * distance);
+                var x = Math.tan(angle) * this.canvas.height;
+                var y = this.canvas.height / 2 - size / 2;
+
+                x = this.canvas.width / 2 + x - size / 2;
+                this.context.fillStyle = 'red';
+                this.context.fillRect(x, y, size, size);
+            }
+        }
+    }]);
+
+    return Enemy;
+}();
+
+exports.default = Enemy;
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _map = __webpack_require__(2);
@@ -927,11 +1041,10 @@ var RaycastEngine = function () {
 		this.context = this.canvas.getContext('2d');
 		this.width = this.canvas.width;
 		this.height = this.canvas.height;
-		this.map = (0, _mapBuilder2.default)(_map.map1, _map.map1_doors);
+		this.map = (0, _mapBuilder2.default)(_map.map1, _map.map1_doors, _map.enemies, this.canvas);
 		this.textures = new _textures2.default();
 		this.debugMode = debugMode;
 		this.raycastCanvas = null;
-
 		if (this.debugMode) {
 			this.raycastCanvas = document.createElement('canvas');
 			this.raycastContext = this.raycastCanvas.getContext('2d');
@@ -967,6 +1080,41 @@ var RaycastEngine = function () {
 				this.drawRaycastCanvas();
 			}
 			this.camera.update();
+			this.drawEnemiesOnMap();
+		}
+	}, {
+		key: 'drawEnemiesOnMap',
+		value: function drawEnemiesOnMap() {
+			var scale = 8;
+
+			var _iteratorNormalCompletion = true;
+			var _didIteratorError = false;
+			var _iteratorError = undefined;
+
+			try {
+				for (var _iterator = this.map.enemies[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var enemy = _step.value;
+
+					this.raycastContext.save();
+					this.raycastContext.translate(enemy.x * scale, enemy.y * scale);
+					this.raycastContext.fillStyle = 'blue';
+					this.raycastContext.fillRect(-scale / 4, -scale / 4, scale / 2, scale / 2);
+					this.raycastContext.restore();
+				}
+			} catch (err) {
+				_didIteratorError = true;
+				_iteratorError = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion && _iterator.return) {
+						_iterator.return();
+					}
+				} finally {
+					if (_didIteratorError) {
+						throw _iteratorError;
+					}
+				}
+			}
 		}
 	}, {
 		key: 'drawRaycastCanvas',

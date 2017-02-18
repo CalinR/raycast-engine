@@ -1,4 +1,4 @@
-import {map1,map1_doors} from './map1'
+import {map1,map1_doors,enemies} from './map1'
 import mapBuilder from './map-builder'
 import Player from './player'
 import Camera from './camera'
@@ -10,12 +10,11 @@ class RaycastEngine {
 		this.context = this.canvas.getContext('2d');
 		this.width = this.canvas.width;
 		this.height = this.canvas.height;
-		this.map = mapBuilder(map1, map1_doors);
+		this.map = mapBuilder(map1, map1_doors, enemies, this.canvas);
 		this.textures = new Textures();
 		this.debugMode = debugMode;
 		this.raycastCanvas = null;
-
-		if (this.debugMode) {
+		if(this.debugMode) {
 			this.raycastCanvas = document.createElement('canvas')
 			this.raycastContext = this.raycastCanvas.getContext('2d');
 			document.body.appendChild(this.raycastCanvas);
@@ -46,6 +45,19 @@ class RaycastEngine {
 			this.drawRaycastCanvas();
 		}
 		this.camera.update();
+		this.drawEnemiesOnMap();
+	}
+
+	drawEnemiesOnMap(){
+		const scale = 8;
+
+		for(let enemy of this.map.enemies){
+			this.raycastContext.save();
+			this.raycastContext.translate(enemy.x * scale, enemy.y * scale);
+			this.raycastContext.fillStyle = 'blue';
+			this.raycastContext.fillRect(-scale / 4, -scale / 4, scale / 2, scale / 2);
+			this.raycastContext.restore();
+		}
 	}
 
 	drawRaycastCanvas() {
