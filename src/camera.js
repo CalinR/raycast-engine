@@ -33,29 +33,73 @@ export default class Camera {
     let columnsToDraw = [];
     let maxWallHeight = this.canvas.height;
     this.doors = [];
-    let startAngle = Math.atan2((-columns / 2), this.focalLength);
-    let endAngle = 0;
+    let allHitData = [];
 
     for(let column = 0; column < columns; column++){
       let x = (-columns / 2 + column);
       let angle = Math.atan2(x, this.focalLength);
-      if(column == 0){
-        startAngle = angle + radians;
-      }
-      endAngle = angle + radians;
       let radians = this.parent.rotation * Math.PI / 180;
       let hitData = this.castRay(radians + angle);
-      let z = hitData.distance;
-      let texture = hitData.texture;
-      let height = this.canvas.height / z;
-      let columnX = column * this.columnWidth;
-      let columnY = (this.canvas.height / 2) - (height / 2);
-      this.textures.getTexture(texture.type, texture.offset, this.columnWidth, hitData.side, this.context, columnX, columnY, height);
+      hitData.column = column;
+      hitData.hitType = 'wall';
+      allHitData.push(hitData);
+      // let z = hitData.distance;
+      // let texture = hitData.texture;
+      // let height = this.canvas.height / z;
+      // let columnX = column * this.columnWidth;
+      // let columnY = (this.canvas.height / 2) - (height / 2);
+      // this.textures.getTexture(texture.type, texture.offset, this.columnWidth, hitData.side, this.context, columnX, columnY, height);
     }
 
     for(let enemy of this.map.enemies){
-      enemy.render(this.parent, this.focalLength, startAngle, endAngle);
+      let hitData = enemy.calculate(this.parent)
+      if(hitData){
+        hitData.hitType = 'sprite';
+        hitData.distance = hitData.distance;
+        allHitData.push(hitData);
+      }
     }
+
+    allHitData = this.sortHitData(allHitData);
+
+    let testHitData = (allHitData, index) => {
+      let hitData = allHitData[index];
+      // console.log(hitData);
+      if(hitData){
+        if(hitData.hitType == 'wall'){
+          let z = hitData.distance;
+          let texture = hitData.texture;
+          let height = this.canvas.height / z;
+          let columnX = hitData.column * this.columnWidth;
+          let columnY = (this.canvas.height / 2) - (height / 2);
+          this.textures.getTexture(texture.type, texture.offset, this.columnWidth, hitData.side, this.context, columnX, columnY, height);
+        }
+        else if(hitData.hitType == 'sprite') {
+          hitData.sprite.render(hitData);
+        }
+        let newIndex = index + 1;
+        // setTimeout(() => {
+          testHitData(allHitData, newIndex);
+        // }, 10)
+      }
+    }
+
+    testHitData(allHitData, 0);
+
+    // for(let hitData of allHitData){
+    //   let z = hitData.distance;
+    //   let texture = hitData.texture;
+    //   let height = this.canvas.height / z;
+    //   let columnX = hitData.column * this.columnWidth;
+    //   let columnY = (this.canvas.height / 2) - (height / 2);
+    //   this.textures.getTexture(texture.type, texture.offset, this.columnWidth, hitData.side, this.context, columnX, columnY, height);
+    // }
+    
+    // console.log(allHitData);
+
+    // for(let enemy of this.map.enemies){
+    //   enemy.render(this.parent);
+    // }
 
     // Update door if it is in line of site
     for(let door of this.doors){
@@ -63,6 +107,12 @@ export default class Camera {
         door.update();
       }
     }
+  }
+
+  sortHitData(hitData){
+    return hitData.sort((a, b) => {
+      return a.zIndex - b.zIndex;
+    })
   }
 
   drawBackground(){
@@ -79,6 +129,7 @@ export default class Camera {
 
     let hitData = this.traverseGrid(angle, false);
     hitData = this.traverseGrid(angle, true, hitData);
+    let zIndex = -Math.floor(hitData.distance*1000);
 
     if(hitData.xHit && hitData.yHit){
       if(this.raycastCanvas){
@@ -96,6 +147,7 @@ export default class Camera {
 
       return {
         distance: hitData.distance,
+        zIndex: zIndex,
         texture: hitData.texture,
         side: hitData.side,
         tile: hitData.tile
@@ -104,6 +156,7 @@ export default class Camera {
 
     return {
       distance: 10000,
+      zIndex: zIndex,
       texture: hitData.texture,
       side: hitData.side,
       tile: hitData.tile
@@ -235,6 +288,7 @@ export default class Camera {
           hitData.texture.type = mapCheck;
           hitData.side = vertical ? 1 : 0;
           hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
+          
           hitData.distance = distanceCheck;
           break;
         }

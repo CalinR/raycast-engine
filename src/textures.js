@@ -38,8 +38,15 @@ export default class Textures {
     });
   }
 
-  preloadTextures(map){
+  preloadSprites(sprites){
+    for(let sprite of sprites){
+      let image = new Image();
+      image.src = `./assets/${sprite.texture}`;
+      sprite.image = image;
+    }
+  }
 
+  preloadTextures(map){
     return new Promise((resolve, reject) => {
       this.tiles = this.getUniqueTiles(map);
       for(let t = 0; t<this.tiles.length; t++){

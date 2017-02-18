@@ -28,7 +28,12 @@ export const map1 = [
 ];
 
 export const enemies = [
-  new Enemy({ x: 15, y: 4 })
+  new Enemy({ x: 15, y: 4.5, texture: 'enemy.png' }),
+  new Enemy({ x: 20, y: 10, texture: 'light.png' }),
+  new Enemy({ x: 10, y: 10, texture: 'table.png' }),
+  new Enemy({ x: 29, y: 8.5, texture: 'light.png' }),
+  new Enemy({ x: 8.5, y: 18, texture: 'light.png' }),
+  new Enemy({ x: 8.5, y: 20, texture: 'light.png' }),
 ]
 
 export const map1_doors = [6]

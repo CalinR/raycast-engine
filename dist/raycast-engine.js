@@ -129,29 +129,29 @@ var Camera = function () {
   }, {
     key: 'createRays',
     value: function createRays() {
+      var _this = this;
+
       var columns = Math.ceil(this.canvas.width / this.columnWidth);
       this.drawBackground();
       var columnsToDraw = [];
       var maxWallHeight = this.canvas.height;
       this.doors = [];
-      var startAngle = Math.atan2(-columns / 2, this.focalLength);
-      var endAngle = 0;
+      var allHitData = [];
 
       for (var column = 0; column < columns; column++) {
         var x = -columns / 2 + column;
         var angle = Math.atan2(x, this.focalLength);
-        if (column == 0) {
-          startAngle = angle + _radians;
-        }
-        endAngle = angle + _radians;
-        var _radians = this.parent.rotation * Math.PI / 180;
-        var hitData = this.castRay(_radians + angle);
-        var z = hitData.distance;
-        var texture = hitData.texture;
-        var height = this.canvas.height / z;
-        var columnX = column * this.columnWidth;
-        var columnY = this.canvas.height / 2 - height / 2;
-        this.textures.getTexture(texture.type, texture.offset, this.columnWidth, hitData.side, this.context, columnX, columnY, height);
+        var radians = this.parent.rotation * Math.PI / 180;
+        var hitData = this.castRay(radians + angle);
+        hitData.column = column;
+        hitData.hitType = 'wall';
+        allHitData.push(hitData);
+        // let z = hitData.distance;
+        // let texture = hitData.texture;
+        // let height = this.canvas.height / z;
+        // let columnX = column * this.columnWidth;
+        // let columnY = (this.canvas.height / 2) - (height / 2);
+        // this.textures.getTexture(texture.type, texture.offset, this.columnWidth, hitData.side, this.context, columnX, columnY, height);
       }
 
       var _iteratorNormalCompletion = true;
@@ -162,10 +162,13 @@ var Camera = function () {
         for (var _iterator = this.map.enemies[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
           var enemy = _step.value;
 
-          enemy.render(this.parent, this.focalLength, startAngle, endAngle);
+          var _hitData = enemy.calculate(this.parent);
+          if (_hitData) {
+            _hitData.hitType = 'sprite';
+            _hitData.distance = _hitData.distance;
+            allHitData.push(_hitData);
+          }
         }
-
-        // Update door if it is in line of site
       } catch (err) {
         _didIteratorError = true;
         _iteratorError = err;
@@ -181,6 +184,47 @@ var Camera = function () {
         }
       }
 
+      allHitData = this.sortHitData(allHitData);
+
+      var testHitData = function testHitData(allHitData, index) {
+        var hitData = allHitData[index];
+        // console.log(hitData);
+        if (hitData) {
+          if (hitData.hitType == 'wall') {
+            var z = hitData.distance;
+            var texture = hitData.texture;
+            var height = _this.canvas.height / z;
+            var columnX = hitData.column * _this.columnWidth;
+            var columnY = _this.canvas.height / 2 - height / 2;
+            _this.textures.getTexture(texture.type, texture.offset, _this.columnWidth, hitData.side, _this.context, columnX, columnY, height);
+          } else if (hitData.hitType == 'sprite') {
+            hitData.sprite.render(hitData);
+          }
+          var newIndex = index + 1;
+          // setTimeout(() => {
+          testHitData(allHitData, newIndex);
+          // }, 10)
+        }
+      };
+
+      testHitData(allHitData, 0);
+
+      // for(let hitData of allHitData){
+      //   let z = hitData.distance;
+      //   let texture = hitData.texture;
+      //   let height = this.canvas.height / z;
+      //   let columnX = hitData.column * this.columnWidth;
+      //   let columnY = (this.canvas.height / 2) - (height / 2);
+      //   this.textures.getTexture(texture.type, texture.offset, this.columnWidth, hitData.side, this.context, columnX, columnY, height);
+      // }
+
+      // console.log(allHitData);
+
+      // for(let enemy of this.map.enemies){
+      //   enemy.render(this.parent);
+      // }
+
+      // Update door if it is in line of site
       var _iteratorNormalCompletion2 = true;
       var _didIteratorError2 = false;
       var _iteratorError2 = undefined;
@@ -209,6 +253,13 @@ var Camera = function () {
       }
     }
   }, {
+    key: 'sortHitData',
+    value: function sortHitData(hitData) {
+      return hitData.sort(function (a, b) {
+        return a.zIndex - b.zIndex;
+      });
+    }
+  }, {
     key: 'drawBackground',
     value: function drawBackground() {
       this.context.fillStyle = this.ceilingColor;
@@ -225,6 +276,7 @@ var Camera = function () {
 
       var hitData = this.traverseGrid(angle, false);
       hitData = this.traverseGrid(angle, true, hitData);
+      var zIndex = -Math.floor(hitData.distance * 1000);
 
       if (hitData.xHit && hitData.yHit) {
         if (this.raycastCanvas) {
@@ -242,6 +294,7 @@ var Camera = function () {
 
         return {
           distance: hitData.distance,
+          zIndex: zIndex,
           texture: hitData.texture,
           side: hitData.side,
           tile: hitData.tile
@@ -250,6 +303,7 @@ var Camera = function () {
 
       return {
         distance: 10000,
+        zIndex: zIndex,
         texture: hitData.texture,
         side: hitData.side,
         tile: hitData.tile
@@ -383,6 +437,7 @@ var Camera = function () {
             hitData.texture.type = mapCheck;
             hitData.side = vertical ? 1 : 0;
             hitData.texture.offset = vertical ? hitData.xHit - mapX : hitData.yHit - mapY;
+
             hitData.distance = distanceCheck;
             break;
           }
@@ -472,7 +527,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var map1 = exports.map1 = [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 3, 0, 0, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1], [1, 0, 0, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0, 0, 2], [1, 0, 0, 3, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1], [1, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 1, 1, 1, 1, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 6, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 4, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 0, 0, 4, 2, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 4, 3, 3, 4, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 4, 3, 3, 4, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]];
 
-var enemies = exports.enemies = [new _enemy2.default({ x: 15, y: 4 })];
+var enemies = exports.enemies = [new _enemy2.default({ x: 15, y: 4.5, texture: 'enemy.png' }), new _enemy2.default({ x: 20, y: 10, texture: 'light.png' }), new _enemy2.default({ x: 10, y: 10, texture: 'table.png' }), new _enemy2.default({ x: 29, y: 8.5, texture: 'light.png' }), new _enemy2.default({ x: 8.5, y: 18, texture: 'light.png' }), new _enemy2.default({ x: 8.5, y: 20, texture: 'light.png' })];
 
 var map1_doors = exports.map1_doors = [6];
 
@@ -765,6 +820,36 @@ var Textures = function () {
       });
     }
   }, {
+    key: 'preloadSprites',
+    value: function preloadSprites(sprites) {
+      var _iteratorNormalCompletion = true;
+      var _didIteratorError = false;
+      var _iteratorError = undefined;
+
+      try {
+        for (var _iterator = sprites[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          var sprite = _step.value;
+
+          var image = new Image();
+          image.src = './assets/' + sprite.texture;
+          sprite.image = image;
+        }
+      } catch (err) {
+        _didIteratorError = true;
+        _iteratorError = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion && _iterator.return) {
+            _iterator.return();
+          }
+        } finally {
+          if (_didIteratorError) {
+            throw _iteratorError;
+          }
+        }
+      }
+    }
+  }, {
     key: 'preloadTextures',
     value: function preloadTextures(map) {
       var _this = this;
@@ -957,8 +1042,8 @@ var Enemy = function () {
             x = _ref$x === undefined ? 0 : _ref$x,
             _ref$y = _ref.y,
             y = _ref$y === undefined ? 0 : _ref$y,
-            _ref$image = _ref.image,
-            image = _ref$image === undefined ? null : _ref$image,
+            _ref$texture = _ref.texture,
+            texture = _ref$texture === undefined ? null : _ref$texture,
             _ref$canvas = _ref.canvas,
             canvas = _ref$canvas === undefined ? null : _ref$canvas,
             _ref$context = _ref.context,
@@ -968,14 +1053,24 @@ var Enemy = function () {
 
         this.x = x;
         this.y = y;
-        this.image = image;
+        this.texture = texture;
+        this.image = null;
         this.canvas = canvas;
         this.context = context;
     }
 
     _createClass(Enemy, [{
-        key: 'render',
-        value: function render(camera, focalLength, start, end) {
+        key: "render",
+        value: function render(hitData) {
+            if (this.image) {
+                // this.context.fillStyle = 'red';
+                // this.context.fillRect(hitData.x, hitData.y, hitData.size, hitData.size);
+                this.context.drawImage(this.image, hitData.x, hitData.y, hitData.size, hitData.size);
+            }
+        }
+    }, {
+        key: "calculate",
+        value: function calculate(camera) {
             var dx = this.x - camera.x;
             var dy = this.y - camera.y;
             var angle = Math.atan2(dy, dx) - camera.rotation * (Math.PI / 180);
@@ -987,11 +1082,23 @@ var Enemy = function () {
                 var size = this.canvas.height / (Math.cos(angle) * distance);
                 var x = Math.tan(angle) * this.canvas.height;
                 var y = this.canvas.height / 2 - size / 2;
-
                 x = this.canvas.width / 2 + x - size / 2;
-                this.context.fillStyle = 'red';
-                this.context.fillRect(x, y, size, size);
+                var dbx = this.x - camera.x;
+                var dby = this.y - camera.y;
+                var blockDist = dbx * dbx + dby * dby;
+                var zIndex = -Math.floor(blockDist * 1000);
+
+                return {
+                    distance: distance,
+                    zIndex: zIndex,
+                    x: x,
+                    y: y,
+                    size: size,
+                    sprite: this
+                };
             }
+
+            return null;
         }
     }]);
 
@@ -1042,6 +1149,7 @@ var RaycastEngine = function () {
 		this.width = this.canvas.width;
 		this.height = this.canvas.height;
 		this.map = (0, _mapBuilder2.default)(_map.map1, _map.map1_doors, _map.enemies, this.canvas);
+
 		this.textures = new _textures2.default();
 		this.debugMode = debugMode;
 		this.raycastCanvas = null;
@@ -1052,9 +1160,9 @@ var RaycastEngine = function () {
 		}
 		this.player = new _player2.default({
 			map: this.map,
-			x: 10,
-			y: 10,
-			rotation: 0,
+			x: 18,
+			y: 15.5,
+			rotation: 270,
 			raycastCanvas: this.raycastCanvas
 		});
 		this.camera = new _camera2.default({
@@ -1070,6 +1178,7 @@ var RaycastEngine = function () {
 		this.textures.preloadTextures(_map.map1).then(function () {
 			return _this.gameLoop();
 		});
+		this.textures.preloadSprites(_map.enemies);
 	}
 
 	_createClass(RaycastEngine, [{

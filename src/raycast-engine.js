@@ -11,6 +11,7 @@ class RaycastEngine {
 		this.width = this.canvas.width;
 		this.height = this.canvas.height;
 		this.map = mapBuilder(map1, map1_doors, enemies, this.canvas);
+		
 		this.textures = new Textures();
 		this.debugMode = debugMode;
 		this.raycastCanvas = null;
@@ -21,9 +22,9 @@ class RaycastEngine {
 		}
 		this.player = new Player({
 			map: this.map,
-			x: 10,
-			y: 10,
-			rotation: 0,
+			x: 18,
+			y: 15.5,
+			rotation: 270,
 			raycastCanvas: this.raycastCanvas
 		});
 		this.camera = new Camera({
@@ -37,6 +38,7 @@ class RaycastEngine {
 		window.lastUpdate = Date.now();
 
 		this.textures.preloadTextures(map1).then(() => this.gameLoop());
+		this.textures.preloadSprites(enemies);
 	}
 
 	update() {
